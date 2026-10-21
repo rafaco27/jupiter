@@ -1,0 +1,1308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root { color-scheme: dark; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; font: 14px/1.4 system-ui, sans-serif; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<title>Jupiter Up Close</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a full-bleed 3D viewport up top, a field guide of five fact plates, then a retro travel brochure. */
+:root {
+  --space: #0a0c13;
+  --panel: #141823;
+  --panel-2: #1b2030;
+  --line: #2a3045;
+  --ink: #efe6d6;
+  --muted: #a39d92;
+  --ochre: #e0a95f;
+  --rust: #c4573a;
+  --cream: #f3e3c3;
+  --ice: #9fc3d6;
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--space); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.02; letter-spacing: 0.01em; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ochre); }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+
+/* ---------- Header ---------- */
+header { padding-block: 28px 18px; }
+header .wrap { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 32px; }
+header h1 { font-size: clamp(44px, 8vw, 88px); font-weight: 900; text-transform: uppercase; color: var(--cream); }
+header h1 span { color: var(--ochre); }
+header p { max-width: 46ch; margin: 0; color: var(--muted); }
+
+/* ---------- Viewer ---------- */
+.viewer { position: relative; height: clamp(440px, 72vh, 760px); border-block: 1px solid var(--line); background: #05060a; overflow: hidden; }
+#scene { position: absolute; inset: 0; display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+#scene:active { cursor: grabbing; }
+.hud { position: absolute; left: 0; right: 0; pointer-events: none; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.hud > * { pointer-events: auto; }
+.hud.top { top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+.hud.bottom { bottom: 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.chip { background: rgba(20, 24, 35, 0.82); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; cursor: pointer; backdrop-filter: blur(6px); transition: border-color .15s, background .15s; }
+.chip:hover { border-color: var(--ochre); }
+.chip[aria-pressed="true"] { background: var(--ochre); color: #1a1208; border-color: var(--ochre); font-weight: 700; }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; background: rgba(20, 24, 35, 0.82); border: 1px solid var(--line); border-radius: 12px; padding: 8px 14px; font-size: 13px; backdrop-filter: blur(6px); }
+.controls label { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.controls input[type="range"] { width: 120px; accent-color: var(--ochre); }
+.controls input[type="checkbox"] { accent-color: var(--ochre); }
+.hint { font-family: var(--mono); font-size: 11px; color: var(--muted); background: rgba(10,12,19,.7); padding: 4px 10px; border-radius: 6px; }
+
+.card { position: absolute; top: 60px; right: max(16px, env(safe-area-inset-right, 0px)); width: min(340px, calc(100% - 32px)); max-height: calc(100% - 130px); overflow-y: auto; background: rgba(20, 24, 35, 0.92); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; backdrop-filter: blur(8px); }
+.card h2 { font-size: 34px; text-transform: uppercase; color: var(--cream); }
+.card .tag { margin: 4px 0 12px; color: var(--muted); font-style: italic; }
+.card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0 0 12px; font-size: 14px; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+.card p { margin: 0; font-size: 14.5px; }
+.card .close { position: absolute; top: 10px; right: 12px; background: none; border: 0; color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; }
+.scale-note { font-family: var(--mono); font-size: 11px; color: var(--muted); margin: 8px 0 0; }
+@media (max-width: 640px) {
+  .card { top: auto; bottom: 132px; max-height: 38%; padding: 14px 16px; }
+  .card.docked { position: static; width: auto; max-height: none; margin: 12px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); backdrop-filter: none; background: var(--panel); }
+  .card.docked .close { display: none; }
+  .hud.top { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+  .hud.top .chip { flex: 0 0 auto; }
+  .card h2 { font-size: 28px; }
+  .controls input[type="range"] { width: 90px; }
+  .hint { display: none; }
+}
+
+/* ---------- Field guide ---------- */
+section { padding-block: 56px; }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 26px; }
+.section-head h2 { font-size: clamp(36px, 5vw, 56px); text-transform: uppercase; color: var(--cream); }
+.section-head p { margin: 0; max-width: 52ch; color: var(--muted); }
+.plates { display: grid; grid-template-columns: repeat(6, 1fr); gap: 18px; }
+.plate { grid-column: span 3; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.plate.third { grid-column: span 2; }
+.plate h3 { font-size: 30px; text-transform: uppercase; color: var(--ochre); }
+.plate p { margin: 0; }
+.plate ul { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
+.big { font-family: var(--display); font-weight: 800; font-size: clamp(44px, 6vw, 64px); line-height: 1; color: var(--cream); }
+.big small { font-size: 0.4em; color: var(--muted); font-family: var(--body); font-weight: 400; margin-left: 6px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.stat { background: var(--panel-2); border-radius: 10px; padding: 10px 12px; }
+.stat b { display: block; font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; font-size: 17px; color: var(--cream); }
+.stat span { font-size: 12.5px; color: var(--muted); }
+.figure { background: var(--panel-2); border-radius: 12px; padding: 14px; overflow-x: auto; }
+.figure svg { display: block; width: 100%; height: auto; min-width: 280px; }
+.figure figcaption, .caption { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+figure { margin: 0; }
+.layers { display: grid; gap: 4px; }
+.layer { display: grid; grid-template-columns: 12px 1fr auto; gap: 10px; align-items: center; font-size: 14px; }
+.layer i { width: 12px; height: 12px; border-radius: 3px; }
+.layer .num { color: var(--muted); font-size: 12.5px; }
+.thermo { height: 14px; border-radius: 7px; background: linear-gradient(90deg, #6fa6d6, #c9b48a 40%, #e07a3a 70%, #ffe7a8); }
+.thermo-labels { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 12px; color: var(--muted); gap: 8px; flex-wrap: wrap; }
+.moon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(10px, 1fr)); gap: 4px; }
+.moon-grid i { aspect-ratio: 1; border-radius: 50%; background: var(--line); max-width: 100%; }
+.moon-grid i.g { background: var(--ochre); }
+
+/* ---------- Brochure ---------- */
+.brochure { background: var(--cream); color: #2a1a10; border-radius: 22px; overflow: hidden; display: grid; grid-template-columns: 1.1fr 1fr 1fr; }
+.panel-b { padding: 30px 28px; display: flex; flex-direction: column; gap: 14px; min-width: 0; border-right: 2px dashed rgba(42,26,16,.25); }
+.panel-b:last-child { border-right: 0; }
+.cover { background: radial-gradient(circle at 70% 115%, #e0a95f 0 38%, #c4573a 38% 44%, #e9c38c 44% 50%, #b9703f 50% 56%, transparent 56%), linear-gradient(180deg, #1a2140, #3a2a4a 60%, #6b3a3a); color: var(--cream); min-height: 460px; justify-content: flex-start; }
+.cover .eyebrow { color: #f6c983; }
+.cover h3 { font-size: clamp(54px, 7vw, 82px); font-weight: 900; text-transform: uppercase; line-height: .9; }
+.slogan { font-family: var(--display); font-size: 28px; font-weight: 800; text-transform: uppercase; color: #ffd89a; line-height: 1.05; }
+.cover p { margin: 0; max-width: 30ch; }
+.panel-b h4 { font-family: var(--display); font-size: 26px; text-transform: uppercase; margin: 0; color: #8e3a20; letter-spacing: .02em; }
+.panel-b p { margin: 0; font-size: 15px; }
+.tour { display: grid; gap: 12px; }
+.tour div { border-top: 1px solid rgba(42,26,16,.2); padding-top: 10px; }
+.tour b { display: block; font-size: 16px; }
+.tour span { font-size: 14.5px; }
+.ticket { background: #2a1a10; color: var(--cream); border-radius: 12px; padding: 14px 16px; font-family: var(--mono); font-size: 13px; display: grid; gap: 4px; }
+.ticket b { color: #ffd89a; font-weight: 500; }
+.pack { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; font-size: 14.5px; }
+.fine { font-size: 12.5px !important; color: #6a5545; font-style: italic; }
+.weight { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14.5px; }
+.weight input { width: 80px; padding: 6px 8px; border-radius: 8px; border: 1px solid #b9a07c; background: #fff8ea; color: #2a1a10; font: inherit; }
+.weight output { font-family: var(--mono); font-weight: 500; color: #8e3a20; }
+
+.watermark { position: fixed; top: calc(10px + env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); z-index: 50; pointer-events: none; user-select: none; font-family: var(--display); font-weight: 800; font-size: 18px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); opacity: 0.22; }
+footer { padding-block: 28px 48px; color: var(--muted); font-size: 13px; }
+footer p { margin: 0 0 6px; max-width: 90ch; }
+
+@media (max-width: 900px) {
+  .plate, .plate.third { grid-column: span 6; }
+  .brochure { grid-template-columns: 1fr; }
+  .panel-b { border-right: 0; border-bottom: 2px dashed rgba(42,26,16,.25); }
+  .cover { min-height: 400px; }
+}
+@media (prefers-reduced-motion: reduce) { .chip { transition: none; } }
+/* ---------- Dive mode ---------- */
+.chip.dive { background: var(--rust); border-color: var(--rust); color: #fff4e6; font-weight: 700; }
+.chip.dive:hover { border-color: var(--cream); }
+.viewer.diving .hud, .viewer.diving .card { display: none !important; }
+.loading[hidden], .dive-hud[hidden] { display: none !important; }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--mono); font-size: 13px; letter-spacing: .08em; color: var(--muted); pointer-events: none; }
+.fade { position: absolute; inset: 0; background: #e9d3a6; opacity: 0; pointer-events: none; transition: opacity .4s ease; }
+.fade.on { opacity: 1; }
+.dive-hud { position: absolute; inset: 0; pointer-events: none; }
+.dive-hud > * { pointer-events: auto; }
+.gauge { position: absolute; top: 16px; left: max(16px, env(safe-area-inset-left, 0px)); width: min(380px, calc(100% - 32px)); background: rgba(14, 12, 16, 0.72); border: 1px solid rgba(239, 230, 214, 0.18); border-radius: 14px; padding: 16px 18px; backdrop-filter: blur(8px); display: grid; gap: 10px; }
+.gauge h2 { font-size: 34px; text-transform: uppercase; color: var(--cream); }
+.gauge p { margin: 0; font-size: 14.5px; }
+.readouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.readouts div { background: rgba(255, 255, 255, 0.06); border-radius: 8px; padding: 6px 8px; min-width: 0; }
+.readouts span { display: block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.readouts b { display: block; font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; font-size: 15px; color: var(--cream); overflow-wrap: anywhere; }
+.ruler { position: absolute; top: 16px; right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 2px; width: 270px; background: rgba(14, 12, 16, 0.6); border: 1px solid rgba(239, 230, 214, 0.14); border-radius: 12px; padding: 8px; backdrop-filter: blur(6px); }
+.ruler button { display: flex; justify-content: space-between; gap: 10px; background: none; border: 0; border-radius: 6px; padding: 5px 8px; font-size: 12.5px; text-align: left; color: var(--muted); cursor: pointer; }
+.ruler button .num { font-size: 11.5px; white-space: nowrap; }
+.ruler button:hover { color: var(--ink); background: rgba(255, 255, 255, 0.06); }
+.ruler button[aria-current="true"] { color: #1a1208; background: var(--ochre); font-weight: 700; }
+.dive-bar { position: absolute; bottom: 14px; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: rgba(14, 12, 16, 0.72); border: 1px solid rgba(239, 230, 214, 0.18); border-radius: 12px; padding: 8px 12px; backdrop-filter: blur(6px); }
+.dive-bar input { flex: 1 1 160px; accent-color: var(--ochre); min-width: 0; }
+.dive-bar .chip:disabled { opacity: .4; cursor: default; }
+@media (max-width: 760px) {
+  .ruler { display: none; }
+  .gauge { padding: 12px 14px; gap: 8px; }
+  .gauge h2 { font-size: 26px; }
+  .gauge p { font-size: 13.5px; }
+}
+@media (prefers-reduced-motion: reduce) { .fade { transition: none; } }
+</style>
+</head>
+<body>
+<div class="watermark" aria-hidden="true">Olive C</div>
+<header>
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">Fifth planet from the Sun · Gas giant</div>
+      <h1>Jupiter <span>Up Close</span></h1>
+    </div>
+    <p>Drag to orbit, scroll or pinch to zoom, and click Jupiter, its rings, or any of the four Galilean moons to read about it. Press <b>Dive into Jupiter</b> to fall through the clouds all the way to the core.</p>
+  </div>
+</header>
+
+<div class="viewer" id="viewer">
+  <canvas id="scene" aria-label="Interactive 3D model of Jupiter, its rings and its four largest moons"></canvas>
+  <div class="loading" id="loading">Painting Jupiter's clouds…</div>
+  <div class="hud top" id="targets" role="toolbar" aria-label="Fly to">
+    <button class="chip" data-target="jupiter" aria-pressed="true">Jupiter</button>
+    <button class="chip" data-target="grs" aria-pressed="false">Great Red Spot</button>
+    <button class="chip" data-target="rings" aria-pressed="false">Rings</button>
+    <button class="chip" data-target="io" aria-pressed="false">Io</button>
+    <button class="chip" data-target="europa" aria-pressed="false">Europa</button>
+    <button class="chip" data-target="ganymede" aria-pressed="false">Ganymede</button>
+    <button class="chip" data-target="callisto" aria-pressed="false">Callisto</button>
+    <button class="chip dive" id="diveBtn">Dive into Jupiter ↓</button>
+  </div>
+  <aside class="card" id="card" aria-live="polite">
+    <button class="close" id="cardClose" aria-label="Close info">×</button>
+    <div id="cardBody"></div>
+  </aside>
+  <div class="hud bottom">
+    <div class="controls">
+      <div role="group" aria-label="Look" style="display:flex;gap:4px">
+        <button class="chip" id="modeReal" aria-pressed="true">Realistic</button>
+        <button class="chip" id="modeStyle" aria-pressed="false">Stylized</button>
+      </div>
+      <button class="chip" id="playBtn" aria-pressed="false">Pause</button>
+      <label for="speed">Speed <input type="range" id="speed" min="0" max="40" step="0.5" value="4"> <span class="num" id="speedOut">4 h/s</span></label>
+      <label for="orbits"><input type="checkbox" id="orbits" checked> Orbits</label>
+      <label for="labels"><input type="checkbox" id="labels" checked> Labels</label>
+    </div>
+    <div class="hint">Moon sizes ×3 and orbit distances compressed so everything fits on screen</div>
+  </div>
+  <div class="dive-hud" id="diveHud" hidden>
+    <div class="gauge">
+      <div class="eyebrow">Diving into Jupiter</div>
+      <h2 id="dName">Top of the sky</h2>
+      <div class="readouts">
+        <div><span>Altitude</span><b id="dAlt">+60 km</b></div>
+        <div><span>Pressure</span><b id="dP">0.1 bar</b></div>
+        <div><span>Temp</span><b id="dT">−160 °C</b></div>
+      </div>
+      <p id="dText"></p>
+      <p class="scale-note" id="dEst" hidden>Values this deep are estimates from computer models of Jupiter's interior.</p>
+    </div>
+    <nav class="ruler" id="diveRuler" aria-label="Jump to a layer"></nav>
+    <div class="dive-bar">
+      <button class="chip" id="diveUp">▲ Up</button>
+      <input type="range" id="diveDepth" min="0" max="8" step="0.01" value="0" aria-label="Depth">
+      <button class="chip" id="diveDown">▼ Deeper</button>
+      <button class="chip" id="diveExit">Back to orbit</button>
+    </div>
+  </div>
+  <div class="fade" id="fade"></div>
+</div>
+
+<main>
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Field guide</h2>
+        <p>Every number on this page comes from NASA's planetary fact sheets and mission pages. Sizes and distances are rounded.</p>
+      </div>
+
+      <div class="plates">
+        <!-- Size & composition -->
+        <article class="plate">
+          <div class="eyebrow">01 · Size and composition</div>
+          <h3>The biggest planet</h3>
+          <div class="big">11<small>Earths across</small></div>
+          <p>Jupiter is so large that about <b>1,300 Earths</b> could fit inside it, and it has more than twice the mass of all the other planets combined.</p>
+          <figure class="figure">
+            <svg viewBox="0 0 460 180" role="img" aria-label="Earth shown to scale next to a slice of Jupiter">
+              <circle cx="330" cy="560" r="480" fill="#d9a35b"/>
+              <path d="M 0 100 Q 230 70 460 100" stroke="#b5703c" stroke-width="10" fill="none" opacity=".7"/>
+              <path d="M 0 132 Q 230 104 460 132" stroke="#f1d6a8" stroke-width="12" fill="none" opacity=".7"/>
+              <circle cx="60" cy="48" r="20" fill="#4a86c5"/>
+              <path d="M48 40 q8 -6 14 2 q6 8 -4 12 q-8 2 -10 -6 z" fill="#5c9a5a"/>
+              <text x="90" y="44" fill="#efe6d6" font-family="IBM Plex Mono, monospace" font-size="13">Earth · 12,756 km</text>
+              <text x="90" y="62" fill="#a39d92" font-family="IBM Plex Mono, monospace" font-size="12">Jupiter's diameter is 11.2× this</text>
+            </svg>
+            <figcaption>Earth to scale against the edge of Jupiter.</figcaption>
+          </figure>
+          <div class="stats">
+            <div class="stat"><b>142,984 km</b><span>Diameter at equator</span></div>
+            <div class="stat"><b>318 ×</b><span>Earth's mass</span></div>
+            <div class="stat" style="grid-column: 1 / -1"><b style="overflow-wrap: anywhere">1,898,130,000,000,000,000,000,000,000 kg</b><span>Jupiter's full mass, about 1.898 × 10²⁷ kg, or roughly 1.9 octillion kilograms (4.2 octillion pounds). That's 2.5 times the mass of all the other planets put together.</span></div>
+            <div class="stat"><b>1.33 g/cm³</b><span>Average density (Earth: 5.51)</span></div>
+            <div class="stat"><b>2.5 ×</b><span>Earth's gravity at cloud tops</span></div>
+          </div>
+          <p><b>What it's made of:</b> mostly hydrogen and helium, the same ingredients as the Sun. By number of molecules it is about 90% hydrogen and 10% helium. Jupiter has no solid surface.</p>
+          <div class="layers" aria-label="Layers from outside to center">
+            <div class="layer"><i style="background:#e8c58d"></i><span>Cloud layers (ammonia, water)</span><span class="num">top ~50 km</span></div>
+            <div class="layer"><i style="background:#c99a62"></i><span>Gaseous then liquid hydrogen</span><span class="num">to ~20%</span></div>
+            <div class="layer"><i style="background:#8a6a8e"></i><span>Liquid metallic hydrogen</span><span class="num">most of interior</span></div>
+            <div class="layer"><i style="background:#5b4a5e"></i><span>Dense "fuzzy" core of rock, ice and metal</span><span class="num">center</span></div>
+          </div>
+          <p class="caption">Juno's gravity data suggests the core isn't a neat solid ball but is partly dissolved into the hydrogen around it.</p>
+        </article>
+
+        <!-- Distance -->
+        <article class="plate">
+          <div class="eyebrow">02 · Distance from the Sun</div>
+          <h3>Five times farther than Earth</h3>
+          <div class="big">778<small>million km (5.2 AU)</small></div>
+          <p>Jupiter orbits about 5.2 times farther from the Sun than Earth does. Sunlight takes about <b>43 minutes</b> to reach it, compared with 8 minutes to reach Earth.</p>
+          <figure class="figure">
+            <svg viewBox="0 0 460 120" role="img" aria-label="Distances of inner planets and Jupiter from the Sun, to scale">
+              <line x1="22" y1="60" x2="440" y2="60" stroke="#2a3045" stroke-width="2"/>
+              <circle cx="22" cy="60" r="12" fill="#f6c453"/>
+              <text x="22" y="98" fill="#a39d92" font-family="IBM Plex Mono, monospace" font-size="11" text-anchor="middle">Sun</text>
+              <!-- scale: 0 AU at x=22, 5.2 AU at x=430 → 78.5 px per AU -->
+              <circle cx="52" cy="60" r="2.5" fill="#a39d92"/>
+              <circle cx="79" cy="60" r="3.5" fill="#e3c79a"/>
+              <circle cx="100.5" cy="60" r="3.5" fill="#4a86c5"/>
+              <text x="100.5" y="40" fill="#efe6d6" font-family="IBM Plex Mono, monospace" font-size="11" text-anchor="middle">Earth</text>
+              <text x="100.5" y="98" fill="#a39d92" font-family="IBM Plex Mono, monospace" font-size="11" text-anchor="middle">1 AU</text>
+              <circle cx="141.6" cy="60" r="3" fill="#c4573a"/>
+              <text x="141.6" y="40" fill="#a39d92" font-family="IBM Plex Mono, monospace" font-size="11" text-anchor="middle">Mars</text>
+              <rect x="190" y="52" width="85" height="16" fill="#a39d92" opacity=".18"/>
+              <text x="232" y="98" fill="#a39d92" font-family="IBM Plex Mono, monospace" font-size="11" text-anchor="middle">Asteroid belt</text>
+              <circle cx="430" cy="60" r="10" fill="#e0a95f"/>
+              <text x="430" y="36" fill="#efe6d6" font-family="IBM Plex Mono, monospace" font-size="11" text-anchor="middle">Jupiter</text>
+              <text x="430" y="98" fill="#a39d92" font-family="IBM Plex Mono, monospace" font-size="11" text-anchor="middle">5.2 AU</text>
+            </svg>
+            <figcaption>Distances to scale (planet sizes are not). 1 AU = Earth–Sun distance = 150 million km.</figcaption>
+          </figure>
+          <div class="stats">
+            <div class="stat"><b>741 million km</b><span>Closest to Sun (perihelion)</span></div>
+            <div class="stat"><b>817 million km</b><span>Farthest (aphelion)</span></div>
+            <div class="stat"><b>11.86 years</b><span>One Jupiter year</span></div>
+            <div class="stat"><b>9 h 56 min</b><span>One Jupiter day, the shortest of any planet</span></div>
+          </div>
+        </article>
+
+        <!-- Moons -->
+        <article class="plate third">
+          <div class="eyebrow">03 · Number of moons</div>
+          <h3>A mini solar system</h3>
+          <div class="big">95<small>official moons</small></div>
+          <p>The International Astronomical Union recognizes 95 moons of Jupiter, and astronomers keep finding more small ones. The four big ones in gold below were discovered by Galileo in 1610.</p>
+          <div class="moon-grid" id="moonGrid" aria-hidden="true"></div>
+          <ul>
+            <li><b>Ganymede</b> is the largest moon in the solar system, bigger than the planet Mercury.</li>
+            <li><b>Io</b> is the most volcanic place in the solar system.</li>
+            <li><b>Europa</b> likely hides a salty ocean under its ice.</li>
+            <li><b>Callisto</b> is one of the most heavily cratered objects known.</li>
+          </ul>
+        </article>
+
+        <!-- Temperature & atmosphere -->
+        <article class="plate third">
+          <div class="eyebrow">04 · Temperature and atmosphere</div>
+          <h3>Freezing on top, scorching inside</h3>
+          <div class="big">−145<small>°C at the cloud tops</small></div>
+          <div>
+            <div class="thermo" aria-hidden="true"></div>
+            <div class="thermo-labels"><span>−145 °C clouds</span><span>~24,000 °C core</span></div>
+          </div>
+          <p>The cloud tops are about −145 °C (−234 °F). Deeper down, pressure squeezes the gas and heats it, and the center may reach about 24,000 °C, hotter than the surface of the Sun.</p>
+          <p>The atmosphere is mostly hydrogen and helium. Its colorful clouds form three main layers: <b>ammonia ice</b> on top, <b>ammonium hydrosulfide</b> in the middle, and <b>water</b> clouds lowest.</p>
+          <p>Light stripes are called <b>zones</b> and dark stripes are <b>belts</b>. Winds in the jet streams between them blow at more than 500 km/h.</p>
+        </article>
+
+        <!-- Unique features -->
+        <article class="plate third">
+          <div class="eyebrow">05 · Unique features</div>
+          <h3>Storms, rings and a giant magnet</h3>
+          <ul>
+            <li><b>The Great Red Spot</b> is a storm wider than Earth that has raged for at least 190 years, maybe more than 350. It has been shrinking for over a century.</li>
+            <li><b>Rings:</b> Jupiter has four faint rings made of dust knocked off its small inner moons. Voyager 1 discovered them in 1979.</li>
+            <li><b>No surface:</b> there is nowhere to land. Gas just gets thicker until it becomes liquid.</li>
+            <li><b>Strongest magnetic field</b> of any planet, about 20,000 times Earth's, creating huge auroras at the poles and deadly radiation belts.</li>
+            <li><b>Fastest spin:</b> a day lasts under 10 hours, which makes Jupiter bulge at the equator.</li>
+          </ul>
+          <p class="caption">Visitors so far: Pioneer 10 and 11, Voyager 1 and 2, Galileo, Juno and others. Europa Clipper and ESA's JUICE are on their way now.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Creative element: travel brochure ===== -->
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Visit Jupiter</h2>
+        <p>Our creative element: a travel brochure from a tour company of the future. The jokes are made up, but every fact in it is real.</p>
+      </div>
+
+      <div class="brochure">
+        <div class="panel-b cover">
+          <div class="eyebrow">Jovian Grand Tours · Est. 2150</div>
+          <h3>Jupiter</h3>
+          <div class="slogan">Everything's bigger out here.</div>
+          <p>Eleven times wider than home, four moons worth a postcard, and a storm older than your great-great-great-grandparents. Book the king of the planets.</p>
+        </div>
+
+        <div class="panel-b">
+          <h4>Tour highlights</h4>
+          <div class="tour">
+            <div><b>Great Red Spot flyover</b><span>Circle a storm that could swallow Earth whole. Winds at its edge top 400 km/h, so keep your seatbelt on.</span></div>
+            <div><b>Io volcano night</b><span>Watch lava fountains on the most volcanic world in the solar system. Some plumes shoot 400 km high.</span></div>
+            <div><b>Europa ice walk</b><span>Stroll on a frozen shell above a hidden ocean that may hold twice as much water as Earth's oceans.</span></div>
+            <div><b>Ganymede base camp</b><span>Rest up on the largest moon in the solar system. It even has its own magnetic field.</span></div>
+            <div><b>Polar aurora cruise</b><span>Jupiter's northern lights are bigger than our whole planet and glow brightest in ultraviolet.</span></div>
+          </div>
+        </div>
+
+        <div class="panel-b">
+          <h4>Before you go</h4>
+          <div class="ticket">
+            <span>FROM <b>EARTH</b> → TO <b>JUPITER</b></span>
+            <span>DISTANCE: about 600–970 million km</span>
+            <span>TRAVEL TIME: 2–6 years*</span>
+            <span>LOCAL DAY: 9 h 56 min · YEAR: 11.86 Earth yrs</span>
+          </div>
+          <p class="fine">*Voyager 1 made it in about 18 months. Juno took 5 years. Your trip length depends on your rocket.</p>
+          <h4>Pack this</h4>
+          <ul class="pack">
+            <li>Heavy radiation shielding (the belts near Io would be deadly within hours)</li>
+            <li>A very warm jacket for −145 °C cloud tops</li>
+            <li>Your own air: there's no oxygen to breathe</li>
+            <li>Strong legs. Gravity here is 2.5 times Earth's.</li>
+          </ul>
+          <div class="weight">
+            <label for="kg">Your weight on Earth (kg)</label>
+            <input id="kg" type="number" min="1" max="300" value="50">
+            <span>→ on Jupiter: <output id="jkg" for="kg">126 kg</output></span>
+          </div>
+          <p class="fine">No landing pads available. Jupiter has no surface, so all tours stay in orbit or on the moons.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Sources: NASA Solar System Exploration "Jupiter Facts" and "Jupiter Moons" pages, NASA Planetary Fact Sheet (NSSDCA), NASA Juno mission pages. Moon count reflects the IAU-recognized total; newly spotted small moons can raise it.</p>
+    <p>The 3D model uses hand-made textures inspired by real Jupiter images. Moons are enlarged 3× and orbit distances compressed so they fit on screen. Rotation speeds and orbital periods are to scale relative to each other.</p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  // ---------- Info for each body ----------
+  const INFO = {
+    jupiter: { name: "Jupiter", tag: "The king of the planets",
+      rows: [["Diameter", "142,984 km"], ["Mass", "1.898 × 10²⁷ kg"], ["Compared to Earth", "318× heavier"], ["Day", "9 h 56 min"], ["Year", "11.86 Earth yrs"], ["Cloud-top temp", "−145 °C"], ["Moons", "95 official"]],
+      text: "A gas giant made mostly of hydrogen and helium. The colored stripes are clouds of ammonia ice stretched into bands by its fast spin and strong jet streams. Press “Dive into Jupiter” to fall through them." },
+    grs: { name: "Great Red Spot", tag: "The longest-lived storm we know",
+      rows: [["Width (2017)", "~16,350 km"], ["Compared to Earth", "about 1.3× wider"], ["Wind speed", "up to ~430 km/h"], ["Watched since", "at least 1830"]],
+      text: "A giant high-pressure storm in Jupiter's southern hemisphere, spinning counterclockwise. It is shrinking and getting rounder, but it is still bigger than our whole planet." },
+    rings: { name: "Rings", tag: "Faint, dusty and easy to miss",
+      rows: [["Discovered", "1979, Voyager 1"], ["Parts", "Halo, main, 2 gossamer"], ["Made of", "Fine dust"], ["Main ring width", "~6,500 km"]],
+      text: "Unlike Saturn's bright icy rings, Jupiter's are thin and dark. Meteorites smash into the small inner moons Metis, Adrastea, Amalthea and Thebe, and the dust they kick up forms the rings. Brightened here so you can see them." },
+    io: { name: "Io", tag: "The volcano moon",
+      rows: [["Diameter", "3,643 km"], ["Distance from Jupiter", "421,700 km"], ["Orbit", "1.77 days"], ["Active volcanoes", "400+"]],
+      text: "Jupiter's gravity squeezes Io as it orbits, heating its insides. That makes it the most volcanically active world in the solar system, coated in yellow and orange sulfur. The dark dots are volcanoes and the red ring is the fallout around Pele." },
+    europa: { name: "Europa", tag: "The ocean under the ice",
+      rows: [["Diameter", "3,122 km"], ["Distance from Jupiter", "671,000 km"], ["Orbit", "3.55 days"], ["Ice shell", "~15–25 km thick"]],
+      text: "Its smooth ice shell is criss-crossed by reddish-brown cracks and likely covers a salty ocean with more water than all of Earth's oceans. NASA's Europa Clipper arrives in 2030." },
+    ganymede: { name: "Ganymede", tag: "Biggest moon in the solar system",
+      rows: [["Diameter", "5,268 km"], ["Distance from Jupiter", "1,070,000 km"], ["Orbit", "7.15 days"], ["Bigger than", "Mercury"]],
+      text: "Old dark regions sit next to lighter, grooved terrain. It is the only moon known to make its own magnetic field, and it probably has an underground ocean too. ESA's JUICE will orbit it in the 2030s." },
+    callisto: { name: "Callisto", tag: "The cratered moon",
+      rows: [["Diameter", "4,821 km"], ["Distance from Jupiter", "1,883,000 km"], ["Orbit", "16.69 days"], ["Surface age", "~4 billion yrs"]],
+      text: "Covered in craters from edge to edge because almost nothing has changed it for billions of years. The rings around Valhalla, its biggest impact basin, stretch about 3,800 km across." }
+  };
+
+  const cardBody = document.getElementById("cardBody");
+  const card = document.getElementById("card");
+  function showInfo(key) {
+    const d = INFO[key];
+    card.hidden = false;
+    cardBody.innerHTML = `<div class="eyebrow">Selected</div><h2>${d.name}</h2><p class="tag">${d.tag}</p><dl>${d.rows.map(r => `<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("")}</dl><p>${d.text}</p>`;
+  }
+  document.getElementById("cardClose").addEventListener("click", () => { card.hidden = true; });
+
+  // ---------- Moon grid and weight calculator (no 3D needed) ----------
+  const grid = document.getElementById("moonGrid");
+  for (let i = 0; i < 95; i++) { const el = document.createElement("i"); if (i < 4) el.className = "g"; grid.appendChild(el); }
+  const kg = document.getElementById("kg"), jkg = document.getElementById("jkg");
+  const updWeight = () => { const v = parseFloat(kg.value); jkg.textContent = isFinite(v) ? Math.round(v * 2.528) + " kg" : "–"; };
+  kg.addEventListener("input", updWeight); updWeight();
+
+  showInfo("jupiter");
+  // on phones the info card sits under the model so it never covers it
+  const phoneMq = window.matchMedia("(max-width: 640px)");
+  const viewerEl = document.getElementById("viewer");
+  function placeCard() {
+    if (phoneMq.matches) { viewerEl.after(card); card.classList.add("docked"); card.hidden = false; }
+    else { viewerEl.appendChild(card); card.classList.remove("docked"); }
+  }
+  placeCard();
+  if (phoneMq.addEventListener) phoneMq.addEventListener("change", placeCard);
+  const loading = document.getElementById("loading");
+  if (typeof THREE === "undefined") { loading.textContent = "The 3D model could not load. Check your connection and reload."; return; }
+  // let the page paint before the texture work starts
+  requestAnimationFrame(() => setTimeout(init, 30));
+
+  function init() {
+  // ---------- Noise helpers ----------
+  function makeNoise(seed) {
+    const p = new Uint8Array(512); let s = seed;
+    const rand = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    const perm = [...Array(256).keys()];
+    for (let i = 255; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
+    for (let i = 0; i < 512; i++) p[i] = perm[i & 255];
+    // tileable in x with period px
+    return function noise(x, y, px) {
+      const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+      const x0 = ((xi % px) + px) % px, x1 = (x0 + 1) % px, y0 = yi & 255;
+      const a = p[(p[x0 & 255] + y0) & 511], b = p[(p[x1 & 255] + y0) & 511], c = p[(p[x0 & 255] + y0 + 1) & 511], d = p[(p[x1 & 255] + y0 + 1) & 511];
+      const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+      return (a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v) / 255;
+    };
+  }
+  function fbm(noise, x, y, oct, px) {
+    let sum = 0, amp = 0.5, f = 1;
+    for (let i = 0; i < oct; i++) { sum += amp * noise(x * f, y * f, px * f); amp *= 0.5; f *= 2; }
+    return sum;
+  }
+  function seeded(seed) { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
+  function canvas2d(W, H) { const c = document.createElement("canvas"); c.width = W; c.height = H; return [c, c.getContext("2d")]; }
+
+  // ---------- Renderer ----------
+  const canvas = document.getElementById("scene");
+  const viewer = document.getElementById("viewer");
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  const MAX_ANISO = renderer.capabilities.getMaxAnisotropy();
+  function finishTex(tex) { tex.encoding = THREE.sRGBEncoding; tex.anisotropy = MAX_ANISO; tex.needsUpdate = true; return tex; }
+
+
+  // ---------- GPU detail: procedural noise that stays sharp at any zoom ----------
+  const NOISE_GLSL = `
+    vec3 dn_mod289(vec3 x){ return x - floor(x * (1.0 / 289.0)) * 289.0; }
+    vec4 dn_mod289(vec4 x){ return x - floor(x * (1.0 / 289.0)) * 289.0; }
+    vec4 dn_permute(vec4 x){ return dn_mod289(((x * 34.0) + 1.0) * x); }
+    vec4 dn_invSqrt(vec4 r){ return 1.79284291400159 - 0.85373472095314 * r; }
+    float dn_snoise(vec3 v){
+      const vec2 C = vec2(1.0 / 6.0, 1.0 / 3.0);
+      const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+      vec3 i = floor(v + dot(v, C.yyy));
+      vec3 x0 = v - i + dot(i, C.xxx);
+      vec3 g = step(x0.yzx, x0.xyz);
+      vec3 l = 1.0 - g;
+      vec3 i1 = min(g.xyz, l.zxy);
+      vec3 i2 = max(g.xyz, l.zxy);
+      vec3 x1 = x0 - i1 + C.xxx;
+      vec3 x2 = x0 - i2 + C.yyy;
+      vec3 x3 = x0 - D.yyy;
+      i = dn_mod289(i);
+      vec4 p = dn_permute(dn_permute(dn_permute(i.z + vec4(0.0, i1.z, i2.z, 1.0)) + i.y + vec4(0.0, i1.y, i2.y, 1.0)) + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+      float n_ = 0.142857142857;
+      vec3 ns = n_ * D.wyz - D.xzx;
+      vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+      vec4 x_ = floor(j * ns.z);
+      vec4 y_ = floor(j - 7.0 * x_);
+      vec4 x = x_ * ns.x + ns.yyyy;
+      vec4 y = y_ * ns.x + ns.yyyy;
+      vec4 h = 1.0 - abs(x) - abs(y);
+      vec4 b0 = vec4(x.xy, y.xy);
+      vec4 b1 = vec4(x.zw, y.zw);
+      vec4 s0 = floor(b0) * 2.0 + 1.0;
+      vec4 s1 = floor(b1) * 2.0 + 1.0;
+      vec4 sh = -step(h, vec4(0.0));
+      vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
+      vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
+      vec3 p0 = vec3(a0.xy, h.x);
+      vec3 p1 = vec3(a0.zw, h.y);
+      vec3 p2 = vec3(a1.xy, h.z);
+      vec3 p3 = vec3(a1.zw, h.w);
+      vec4 norm = dn_invSqrt(vec4(dot(p0, p0), dot(p1, p1), dot(p2, p2), dot(p3, p3)));
+      p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+      vec4 m = max(0.6 - vec4(dot(x0, x0), dot(x1, x1), dot(x2, x2), dot(x3, x3)), 0.0);
+      m = m * m;
+      return 42.0 * dot(m * m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
+    }
+    // fades out octaves smaller than a pixel so nothing shimmers
+    float dn_fbm(vec3 p){
+      float fw = length(fwidth(p));
+      float sum = 0.0, amp = 0.5, f = 1.0;
+      for (int i = 0; i < 7; i++) {
+        sum += amp * dn_snoise(p * f) * (1.0 - smoothstep(0.2, 0.55, fw * f));
+        f *= 2.03; amp *= 0.5;
+      }
+      return sum;
+    }
+  `;
+  function addDetail(mat, amp, freq, stretch) {
+    if (!renderer.capabilities.isWebGL2) return mat;
+    mat.onBeforeCompile = sh => {
+      sh.uniforms.detailAmp = { value: amp };
+      sh.uniforms.detailFreq = { value: freq };
+      sh.uniforms.detailStretch = { value: new THREE.Vector3(...stretch) };
+      sh.vertexShader = sh.vertexShader
+        .replace("#include <common>", "#include <common>\nvarying vec3 vObjPos;")
+        .replace("#include <begin_vertex>", "#include <begin_vertex>\nvObjPos = position;");
+      sh.fragmentShader = sh.fragmentShader
+        .replace("#include <common>", "#include <common>\nvarying vec3 vObjPos;\nuniform float detailAmp; uniform float detailFreq; uniform vec3 detailStretch;\n" + NOISE_GLSL)
+        .replace("#include <map_fragment>", `#include <map_fragment>
+          {
+            vec3 q = normalize(vObjPos) * detailFreq * detailStretch;
+            float w = dn_snoise(q * 0.25) * 0.6;
+            float dd = dn_fbm(q + vec3(w, 0.0, -w));
+            diffuseColor.rgb *= 1.0 + dd * detailAmp;
+          }`);
+    };
+    return mat;
+  }
+
+  // ---------- Jupiter texture (2048 × 1024) ----------
+  function jupiterTexture() {
+    const W = 2048, H = 1024;
+    const [c, ctx] = canvas2d(W, H); const img = ctx.createImageData(W, H);
+    const n = makeNoise(7), n2 = makeNoise(13);
+    // [latitude (0 = north pole, 1 = south pole), r, g, b]
+    const bands = [
+      [0.00, 112, 108, 104], [0.08, 138, 128, 116], [0.16, 190, 168, 136], [0.22, 166, 128, 98],
+      [0.28, 228, 210, 178], [0.335, 172, 116, 78], [0.375, 150, 98, 66], [0.41, 214, 178, 136],
+      [0.45, 242, 230, 204], [0.52, 232, 210, 172], [0.555, 168, 106, 70], [0.6, 186, 128, 88],
+      [0.635, 238, 222, 192], [0.69, 196, 156, 116], [0.74, 226, 206, 172], [0.8, 178, 150, 120],
+      [0.88, 146, 134, 120], [1.00, 110, 106, 102]
+    ];
+    function bandColor(t) {
+      t = Math.min(1, Math.max(0, t));
+      for (let i = 0; i < bands.length - 1; i++) {
+        const a = bands[i], b = bands[i + 1];
+        if (t <= b[0]) { const k = (t - a[0]) / (b[0] - a[0]); return [a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k, a[3] + (b[3] - a[3]) * k]; }
+      }
+      const l = bands[bands.length - 1]; return [l[1], l[2], l[3]];
+    }
+    // Great Red Spot centre (about 22° south)
+    const gx = 0.62 * W, gy = (0.5 + 22 / 180) * H, grx = 0.05 * W, gry = 0.04 * H;
+    const d = img.data;
+    for (let y = 0; y < H; y++) {
+      const lat = y / H;
+      const polar = Math.min(1, Math.max(0, Math.abs(lat - 0.5) - 0.3) / 0.16);
+      const fz = Math.exp(-((lat - 0.458) ** 2) / (2 * 0.008 * 0.008));
+      for (let x = 0; x < W; x++) {
+        const u = x / W;
+        const q = fbm(n2, u * 16, lat * 10, 4, 16) - 0.5;
+        const turb = fbm(n, u * 24 + q * 4, lat * 40 + q * 2, 5, 24) - 0.5;
+        const wave = Math.sin(u * Math.PI * 2 * 10 + lat * 90 + q * 6) * 0.0035;
+        const col = bandColor(lat + turb * 0.026 + wave);
+        const fine = fbm(n, u * 96 + q * 10, lat * 150, 3, 96) - 0.5;
+        const streak = fbm(n2, u * 256, lat * 700, 2, 256) - 0.5;
+        let r = col[0] + fine * 46 + streak * 16, g = col[1] + fine * 40 + streak * 14, b = col[2] + fine * 32 + streak * 12;
+        // dark blue-grey festoons along the edge of the North Equatorial Belt
+        if (fz > 0.02) {
+          const pl = Math.pow(Math.max(0, Math.sin(u * Math.PI * 2 * 13 + q * 5 + (lat - 0.458) * 140)), 6) * fz * 0.5;
+          r += (92 - r) * pl; g += (98 - g) * pl; b += (122 - b) * pl;
+        }
+        // duller, bluish-grey poles
+        if (polar > 0) { const k = polar * 0.55; r += (126 - r) * k; g += (122 - g) * k; b += (130 - b) * k; }
+        // Great Red Spot with a swirling interior and pale collar
+        const dx = (x - gx) / grx, dy = (y - gy) / gry, dd = Math.sqrt(dx * dx + dy * dy);
+        if (dd < 1.6) {
+          const ang = Math.atan2(dy, dx) + dd * 2.6;
+          const ring = 0.5 + 0.5 * Math.sin(ang * 3 + dd * 10 + fine * 5);
+          let k = Math.min(1, Math.max(0, 1 - dd) * 1.7); k = k * k * (3 - 2 * k);
+          const sr = 190 - ring * 36, sg = 76 - ring * 22, sb = 50 - ring * 16;
+          r += (sr - r) * k; g += (sg - g) * k; b += (sb - b) * k;
+          if (dd > 0.95 && dd < 1.4) { const e = 1 - Math.abs(dd - 1.15) / 0.25; r += e * 22; g += e * 20; b += e * 16; }
+        }
+        const i = (y * W + x) * 4;
+        d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    const rnd = seeded(41);
+    // white ovals ("string of pearls") in the south, and brown barges in the north
+    const oval = (x, y, rx, ry, inner, outer) => {
+      for (const ox of [0, -W, W]) {
+        ctx.save(); ctx.translate(x + ox, y); ctx.scale(1, ry / rx);
+        const gr = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+        gr.addColorStop(0, inner); gr.addColorStop(0.6, inner); gr.addColorStop(1, outer);
+        ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      }
+    };
+    for (let i = 0; i < 9; i++) oval(rnd() * W, (0.5 + 40 / 180) * H + (rnd() - 0.5) * 8, 14 + rnd() * 8, 8, "rgba(248,242,230,.85)", "rgba(248,242,230,0)");
+    for (let i = 0; i < 6; i++) oval(rnd() * W, 0.39 * H + (rnd() - 0.5) * 10, 18 + rnd() * 10, 6, "rgba(110,62,40,.75)", "rgba(110,62,40,0)");
+    oval(0.4 * W, (0.5 + 33 / 180) * H, 26, 13, "rgba(230,190,170,.85)", "rgba(230,190,170,0)"); // Oval BA ("Red Spot Jr.")
+    // clusters of polar cyclones seen by Juno
+    for (const py of [0.02 * H, 0.98 * H]) for (let i = 0; i < 9; i++) oval((i / 9) * W + rnd() * 40, py + (rnd() - 0.5) * 10, 60, 7, "rgba(150,146,150,.5)", "rgba(150,146,150,0)");
+    return finishTex(new THREE.CanvasTexture(c));
+  }
+
+  // ---------- Moon textures (1024 × 512) ----------
+  function moonTexture(kind) {
+    const W = 1024, H = 512;
+    const [c0, ctx0] = canvas2d(W, H); const img = ctx0.createImageData(W, H); const d = img.data;
+    const seed = { io: 3, europa: 11, ganymede: 19, callisto: 29 }[kind];
+    const n = makeNoise(seed), n2 = makeNoise(seed + 100);
+    const mix = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const u = x / W, v = y / H;
+      const a = fbm(n, u * 8, v * 4, 6, 8), b = fbm(n2, u * 16, v * 8, 4, 16);
+      let col;
+      if (kind === "io") {
+        col = mix([226, 204, 96], [206, 140, 62], Math.max(0, Math.min(1, (a - 0.45) * 4)));
+        if (b > 0.58) col = mix(col, [242, 238, 206], Math.min(1, (b - 0.58) * 6));
+        if (a < 0.38) col = mix(col, [140, 92, 56], Math.min(1, (0.38 - a) * 8));
+        const pole = Math.abs(v - 0.5) * 2; if (pole > 0.7) col = mix(col, [150, 110, 80], (pole - 0.7) * 2);
+      } else if (kind === "europa") {
+        col = mix([214, 200, 176], [238, 234, 226], Math.min(1, Math.max(0, (a - 0.35) * 3)));
+        if (b > 0.6) col = mix(col, [168, 122, 88], Math.min(1, (b - 0.6) * 5));
+      } else if (kind === "ganymede") {
+        const dark = Math.max(0, Math.min(1, (0.5 - a) * 8));
+        const groove = Math.pow(1 - Math.abs(fbm(n2, u * 48, v * 18 + a * 6, 3, 48) * 2 - 1), 3);
+        col = mix([190 + groove * 30, 180 + groove * 26, 162 + groove * 22], [118, 104, 88], dark);
+        col = mix(col, [120, 110, 100], b * 0.3);
+        const pole = Math.abs(v - 0.5) * 2; if (pole > 0.75) col = mix(col, [215, 212, 210], (pole - 0.75) * 3);
+      } else {
+        col = mix([60, 52, 44], [104, 92, 78], a);
+        col = mix(col, [80, 70, 60], b * 0.4);
+      }
+      const i = (y * W + x) * 4; d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255;
+    }
+    ctx0.putImageData(img, 0, 0);
+    // paint craters and cracks at double resolution on top of the upscaled base
+    const [c, ctx] = canvas2d(W * 2, H * 2);
+    ctx.imageSmoothingQuality = "high"; ctx.drawImage(c0, 0, 0, W * 2, H * 2); ctx.scale(2, 2);
+    const rnd = seeded(seed * 31 + 7);
+    const wrapDraw = (x, fn) => { for (const ox of [0, -W, W]) fn(x + ox); };
+    const crater = (x, y, r, floor, rim) => wrapDraw(x, X => {
+      const g = ctx.createRadialGradient(X, y, 0, X, y, r);
+      g.addColorStop(0, floor); g.addColorStop(0.7, floor); g.addColorStop(0.86, rim); g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(X, y, r, r, 0, 0, Math.PI * 2); ctx.fill();
+    });
+    if (kind === "io") {
+      // Pele's red plume deposit and a white frost halo elsewhere
+      wrapDraw(0.68 * W, X => { ctx.strokeStyle = "rgba(196,72,40,.55)"; ctx.lineWidth = 14; ctx.beginPath(); ctx.ellipse(X, 0.56 * H, 46, 40, 0, 0, Math.PI * 2); ctx.stroke(); });
+      wrapDraw(0.3 * W, X => { ctx.strokeStyle = "rgba(250,248,230,.16)"; ctx.lineWidth = 10; ctx.beginPath(); ctx.ellipse(X, 0.45 * H, 50, 44, 0, 0, Math.PI * 2); ctx.stroke(); });
+      for (let i = 0; i < 90; i++) {
+        const x = rnd() * W, y = (0.12 + rnd() * 0.76) * H, r = 2 + rnd() * 6;
+        crater(x, y, r * 1.8, "rgba(30,22,18,.9)", "rgba(200,90,40,.6)");
+      }
+      crater(0.68 * W, 0.56 * H, 9, "rgba(25,18,14,1)", "rgba(240,120,50,.8)");
+      crater(0.52 * W, 0.6 * H, 12, "rgba(25,18,14,1)", "rgba(230,90,40,.8)"); // Loki Patera
+    } else if (kind === "europa") {
+      // lineae: long double-ridged cracks
+      for (let i = 0; i < 140; i++) {
+        let x = rnd() * W, y = rnd() * H;
+        const pts = []; let ang = rnd() * Math.PI * 2; const len = 40 + rnd() * 260;
+        for (let s = 0; s < len; s += 8) { ang += (rnd() - 0.5) * 0.18; x += Math.cos(ang) * 8; y += Math.sin(ang) * 4; pts.push([x, y]); }
+        const draw = (style, w) => wrapDraw(0, ox => { ctx.strokeStyle = style; ctx.lineWidth = w; ctx.beginPath(); pts.forEach(([px, py], k) => k ? ctx.lineTo(px + ox, py) : ctx.moveTo(px + ox, py)); ctx.stroke(); });
+        const w = 1 + rnd() * 3;
+        draw("rgba(150,88,58,.65)", w + 1.5); draw("rgba(236,226,212,.5)", Math.max(0.6, w * 0.3));
+      }
+      crater(0.75 * W, 0.62 * H, 12, "rgba(240,240,238,.9)", "rgba(255,255,255,.6)"); // Pwyll
+      for (let i = 0; i < 18; i++) { const a = rnd() * Math.PI * 2; ctx.strokeStyle = "rgba(250,250,248,.25)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0.75 * W, 0.62 * H); ctx.lineTo(0.75 * W + Math.cos(a) * 90, 0.62 * H + Math.sin(a) * 50); ctx.stroke(); }
+    } else if (kind === "ganymede") {
+      for (let i = 0; i < 260; i++) { const r = 1.5 + Math.pow(rnd(), 3) * 14; crater(rnd() * W, rnd() * H, r, "rgba(150,140,128,.7)", "rgba(240,236,228,.75)"); }
+      for (let i = 0; i < 6; i++) { const x = rnd() * W, y = (0.2 + rnd() * 0.6) * H; crater(x, y, 10, "rgba(250,250,250,.9)", "rgba(250,250,250,.5)");
+        for (let k = 0; k < 12; k++) { const a = rnd() * Math.PI * 2; ctx.strokeStyle = "rgba(245,245,245,.22)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * 60, y + Math.sin(a) * 35); ctx.stroke(); } }
+    } else {
+      // Valhalla multi-ring basin
+      wrapDraw(0.3 * W, X => { for (let k = 1; k < 14; k++) { ctx.strokeStyle = `rgba(210,198,176,${0.32 - k * 0.02})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(X, 0.45 * H, k * 14, k * 12, 0, 0, Math.PI * 2); ctx.stroke(); } });
+      crater(0.3 * W, 0.45 * H, 28, "rgba(200,188,166,.8)", "rgba(230,220,200,.6)");
+      for (let i = 0; i < 1400; i++) { const r = 0.8 + Math.pow(rnd(), 4) * 12; crater(rnd() * W, rnd() * H, r, "rgba(200,190,172,.75)", "rgba(240,232,216,.6)"); }
+    }
+    return finishTex(new THREE.CanvasTexture(c));
+  }
+
+  // ---------- Stylized (cartoon poster) textures ----------
+  function styleJupiterTexture() {
+    const W = 2048, H = 1024, [c, ctx] = canvas2d(W, H);
+    const bands = [[0, "#6b5b8a"], [0.12, "#8b74a8"], [0.2, "#f2c879"], [0.27, "#d9773f"], [0.33, "#fff1cf"], [0.38, "#e8954a"], [0.44, "#fff6e0"], [0.53, "#f5c46b"], [0.57, "#c85a35"], [0.63, "#ffe9bf"], [0.7, "#e39350"], [0.76, "#fbe1ae"], [0.84, "#8b74a8"], [0.92, "#6b5b8a"]];
+    bands.forEach(([t, col], i) => {
+      const t2 = i + 1 < bands.length ? bands[i + 1][0] : 1;
+      ctx.fillStyle = col; ctx.fillRect(0, t * H, W, (t2 - t) * H + 1);
+    });
+    // wavy band edges
+    ctx.lineWidth = 6;
+    bands.slice(1).forEach(([t, col]) => {
+      ctx.strokeStyle = col; ctx.beginPath();
+      for (let x = 0; x <= W; x += 8) { const y = t * H + Math.sin(x / W * Math.PI * 2 * 8 + t * 40) * 8; x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+      ctx.stroke();
+    });
+    const gx = 0.62 * W, gy = (0.5 + 22 / 180) * H;
+    ctx.fillStyle = "#fff1cf"; ctx.beginPath(); ctx.ellipse(gx, gy, 140, 60, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#c2372a"; ctx.beginPath(); ctx.ellipse(gx, gy, 116, 46, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#e0553a"; ctx.beginPath(); ctx.ellipse(gx + 8, gy - 4, 68, 24, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#2a1020"; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(gx, gy, 116, 46, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = "#ffffff";
+    [[0.2, 0.66], [0.35, 0.665], [0.9, 0.67], [0.48, 0.38], [0.78, 0.3]].forEach(([u, v]) => { ctx.beginPath(); ctx.ellipse(u * W, v * H, 24, 12, 0, 0, Math.PI * 2); ctx.fill(); });
+    return finishTex(new THREE.CanvasTexture(c));
+  }
+  function styleMoonTexture(kind) {
+    const W = 512, H = 256, [c, ctx] = canvas2d(W, H);
+    const base = { io: "#ffd447", europa: "#f4ecdc", ganymede: "#a99c8c", callisto: "#5e5149" }[kind];
+    const spot = { io: "#e8622c", europa: "#b8643e", ganymede: "#6f6358", callisto: "#efe6d6" }[kind];
+    ctx.fillStyle = base; ctx.fillRect(0, 0, W, H);
+    const rnd = seeded(kind.length * 977);
+    if (kind === "europa") {
+      ctx.strokeStyle = spot; ctx.lineWidth = 4;
+      for (let i = 0; i < 14; i++) { ctx.beginPath(); ctx.moveTo(rnd() * W, rnd() * H); ctx.bezierCurveTo(rnd() * W, rnd() * H, rnd() * W, rnd() * H, rnd() * W, rnd() * H); ctx.stroke(); }
+    } else {
+      ctx.fillStyle = spot;
+      for (let i = 0; i < (kind === "callisto" ? 60 : 22); i++) { ctx.beginPath(); ctx.arc(rnd() * W, rnd() * H, rnd() * (kind === "callisto" ? 8 : 20) + 4, 0, Math.PI * 2); ctx.fill(); }
+    }
+    return finishTex(new THREE.CanvasTexture(c));
+  }
+  function toonGradient() {
+    const data = new Uint8Array([90, 90, 90, 255, 180, 180, 180, 255, 255, 255, 255, 255]);
+    const t = new THREE.DataTexture(data, 3, 1, THREE.RGBAFormat);
+    t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return t;
+  }
+
+  function ringTexture() {
+    // radial strip: u runs from inner to outer radius
+    const W = 1024, [c, ctx] = canvas2d(W, 4);
+    const img = ctx.createImageData(W, 4), n = makeNoise(5);
+    // radii in Jupiter radii: inner 1.29 → outer 3.2
+    const inner = 1.29, outer = 3.2;
+    for (let x = 0; x < W; x++) {
+      const R = inner + (outer - inner) * x / W;
+      let a = 0;
+      if (R < 1.71) a = 0.10 * (R - 1.29) / 0.42;                  // halo
+      else if (R < 1.81) a = 0.42 + 0.25 * Math.sin((R - 1.71) / 0.1 * Math.PI); // main ring
+      else if (R < 2.54) a = 0.12 * (1 - (R - 1.81) / 0.73 * 0.5);  // Amalthea gossamer
+      else a = 0.07 * (1 - (R - 2.54) / 0.66);                      // Thebe gossamer
+      a *= 0.75 + 0.5 * n(x * 0.15, 0, 1e6);                         // faint ringlets
+      for (let y = 0; y < 4; y++) { const i = (y * W + x) * 4; img.data[i] = 205; img.data[i + 1] = 175; img.data[i + 2] = 140; img.data[i + 3] = Math.max(0, Math.min(1, a)) * 255; }
+    }
+    ctx.putImageData(img, 0, 0);
+    return { tex: finishTex(new THREE.CanvasTexture(c)), inner, outer };
+  }
+
+  // ---------- Orbit scene ----------
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x05060a);
+  const camera = new THREE.PerspectiveCamera(45, 1, 0.05, 5000);
+  camera.position.set(0, 9, 46);
+  const controls = new THREE.OrbitControls(camera, canvas);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.minDistance = 1.5; controls.maxDistance = 260;
+
+  const ambient = new THREE.AmbientLight(0x3a3f55, 0.35); scene.add(ambient);
+  const sun = new THREE.DirectionalLight(0xfff4e0, 1.9);
+  sun.position.set(-120, 20, 60); scene.add(sun);
+  const SUN_DIR = sun.position.clone().normalize();
+
+  // stars in three brightness classes, slightly tinted
+  [[4200, 1.3, 0.55], [900, 2.2, 0.8], [140, 3.4, 1]].forEach(([count, size, alpha], k) => {
+    const g = new THREE.BufferGeometry(), sp = [], sc = [], rnd = seeded(101 + k);
+    for (let i = 0; i < count; i++) {
+      const v = new THREE.Vector3(rnd() * 2 - 1, rnd() * 2 - 1, rnd() * 2 - 1).normalize().multiplyScalar(1500 + rnd() * 600);
+      sp.push(v.x, v.y, v.z);
+      const t = rnd(); const col = t < 0.15 ? [1, 0.82, 0.68] : t < 0.35 ? [0.75, 0.85, 1] : [1, 1, 1];
+      sc.push(...col);
+    }
+    g.setAttribute("position", new THREE.Float32BufferAttribute(sp, 3));
+    g.setAttribute("color", new THREE.Float32BufferAttribute(sc, 3));
+    scene.add(new THREE.Points(g, new THREE.PointsMaterial({ size, sizeAttenuation: false, vertexColors: true, transparent: true, opacity: alpha, depthWrite: false })));
+  });
+
+  // distant sun glow
+  const [glowC, gctx] = canvas2d(128, 128); const grd = gctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grd.addColorStop(0, "rgba(255,245,220,1)"); grd.addColorStop(0.15, "rgba(255,220,150,.8)"); grd.addColorStop(1, "rgba(255,200,120,0)");
+  gctx.fillStyle = grd; gctx.fillRect(0, 0, 128, 128);
+  const glowTex = new THREE.CanvasTexture(glowC);
+  const sunSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, depthWrite: false }));
+  sunSprite.position.copy(SUN_DIR).multiplyScalar(1500); sunSprite.scale.set(70, 70, 1); scene.add(sunSprite);
+
+  // Jupiter system, tilted 3.13°
+  const RJ = 10;
+  const system = new THREE.Group(); system.rotation.z = THREE.MathUtils.degToRad(3.13); scene.add(system);
+  const jupiter = new THREE.Mesh(new THREE.SphereGeometry(RJ, 160, 120), addDetail(new THREE.MeshStandardMaterial({ map: jupiterTexture(), roughness: 0.92, metalness: 0 }), 0.32, 22, [1, 5, 1]));
+  jupiter.scale.y = 0.935; // Jupiter's equatorial bulge (6.5% flattening)
+  jupiter.userData.key = "jupiter";
+  system.add(jupiter);
+
+  // atmosphere rim glow: brightest on the sunlit limb
+  const atmoMat = new THREE.ShaderMaterial({
+    uniforms: { sunDir: { value: SUN_DIR }, glow: { value: new THREE.Color(0xf6dcb0) }, strength: { value: 1.0 } },
+    vertexShader: "varying vec3 vN; varying vec3 vV; varying vec3 vW; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); vW = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * mv; }",
+    fragmentShader: "uniform vec3 sunDir; uniform vec3 glow; uniform float strength; varying vec3 vN; varying vec3 vV; varying vec3 vW; void main(){ float f = pow(1.0 - max(dot(vN, vV), 0.0), 3.0); float lit = clamp(dot(vW, sunDir) * 0.9 + 0.25, 0.0, 1.0); float a = f * lit * strength; gl_FragColor = vec4(glow * a, a); }",
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  const atmo = new THREE.Mesh(new THREE.SphereGeometry(RJ * 1.018, 96, 64), atmoMat);
+  atmo.raycast = () => {};
+  jupiter.add(atmo);
+
+  // Great Red Spot marker (follows the texture as Jupiter spins)
+  const phi = 0.62 * Math.PI * 2, theta = (0.5 + 22 / 180) * Math.PI;
+  const grsPoint = new THREE.Vector3(-RJ * Math.cos(phi) * Math.sin(theta), RJ * Math.cos(theta), RJ * Math.sin(phi) * Math.sin(theta));
+  const grsAnchor = new THREE.Object3D(); grsAnchor.position.copy(grsPoint); jupiter.add(grsAnchor);
+  const grsHit = new THREE.Mesh(new THREE.SphereGeometry(1.1, 12, 8), new THREE.MeshBasicMaterial({ visible: false }));
+  grsHit.userData.key = "grs"; grsAnchor.add(grsHit);
+
+  // rings
+  const rt = ringTexture();
+  const ringGeo = new THREE.RingGeometry(RJ * rt.inner, RJ * rt.outer, 256, 1);
+  const pos = ringGeo.attributes.position, uv = ringGeo.attributes.uv, tmp = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) { tmp.fromBufferAttribute(pos, i); const r = tmp.length() / RJ; uv.setXY(i, (r - rt.inner) / (rt.outer - rt.inner), 0.5); }
+  const rings = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ map: rt.tex, transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+  rings.rotation.x = -Math.PI / 2; rings.userData.key = "rings";
+  system.add(rings);
+
+  // Galilean moons. Periods in hours; display orbit radii compressed, sizes ×3.
+  const MOONS = [
+    { key: "io", period: 42.46, orbit: 25, size: 3643 },
+    { key: "europa", period: 85.23, orbit: 34, size: 3122 },
+    { key: "ganymede", period: 171.71, orbit: 46, size: 5268 },
+    { key: "callisto", period: 400.54, orbit: 62, size: 4821 }
+  ];
+  const kmPerUnit = 71492 / RJ;
+  const orbitLines = [];
+  MOONS.forEach((m, i) => {
+    const r = (m.size / 2) / kmPerUnit * 3;
+    const tex = moonTexture(m.key);
+    m.mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 96, 64), addDetail(new THREE.MeshStandardMaterial({ map: tex, bumpMap: tex, bumpScale: 0.01, roughness: 0.95 }), m.key === "europa" ? 0.18 : 0.34, 9, [1, 1, 1]));
+    m.mesh.userData.key = m.key; m.phase = i * 1.7 + 0.4; m.radius = r;
+    system.add(m.mesh);
+    const pts = []; for (let a = 0; a <= 192; a++) { const t = a / 192 * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(t) * m.orbit, 0, Math.sin(t) * m.orbit)); }
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x8a7a64, transparent: true, opacity: 0.35 }));
+    system.add(line); orbitLines.push(line);
+  });
+
+  // ---------- Realistic / Stylized looks ----------
+  const grad = toonGradient();
+  const outlineMat = new THREE.MeshBasicMaterial({ color: 0x1a1020, side: THREE.BackSide });
+  function addOutline(mesh, k) { const o = new THREE.Mesh(mesh.geometry, outlineMat); o.scale.setScalar(k); o.visible = false; o.raycast = () => {}; mesh.add(o); return o; }
+  const LOOKS = {
+    jupiter: { real: jupiter.material, style: new THREE.MeshToonMaterial({ map: styleJupiterTexture(), gradientMap: grad }) }
+  };
+  const outlines = [addOutline(jupiter, 1.025)];
+  MOONS.forEach(m => {
+    LOOKS[m.key] = { real: m.mesh.material, style: new THREE.MeshToonMaterial({ map: styleMoonTexture(m.key), gradientMap: grad }) };
+    outlines.push(addOutline(m.mesh, 1.08));
+  });
+  let lookMode = "real";
+  function setLook(mode) {
+    lookMode = mode;
+    const styl = mode === "style";
+    jupiter.material = LOOKS.jupiter[mode];
+    MOONS.forEach(m => m.mesh.material = LOOKS[m.key][mode]);
+    outlines.forEach(o => o.visible = styl);
+    atmo.visible = !styl;
+    rings.material.opacity = styl ? 1 : 0.6;
+    rings.material.color.set(styl ? 0xffb066 : 0xffffff);
+    orbitLines.forEach(l => { l.material.color.set(styl ? 0xffb066 : 0x8a7a64); l.material.opacity = styl ? 0.6 : 0.35; });
+    scene.background.set(styl ? 0x1a1433 : 0x05060a);
+    ambient.intensity = styl ? 0.9 : 0.35;
+    sun.intensity = styl ? 1.1 : 1.9;
+    document.getElementById("modeReal").setAttribute("aria-pressed", String(!styl));
+    document.getElementById("modeStyle").setAttribute("aria-pressed", String(styl));
+  }
+  document.getElementById("modeReal").addEventListener("click", () => setLook("real"));
+  document.getElementById("modeStyle").addEventListener("click", () => setLook("style"));
+  setLook("real");
+
+  // HTML labels
+  const labelLayer = document.createElement("div");
+  labelLayer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden";
+  viewer.insertBefore(labelLayer, viewer.querySelector(".hud.top"));
+  const labelTargets = [{ key: "jupiter", obj: jupiter, off: RJ * 1.05 }, { key: "grs", obj: grsAnchor, off: 1.6 }].concat(MOONS.map(m => ({ key: m.key, obj: m.mesh, off: m.radius * 1.3 })));
+  labelTargets.forEach(l => {
+    const el = document.createElement("div");
+    el.textContent = INFO[l.key].name;
+    el.style.cssText = "position:absolute;left:0;top:0;font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#efe6d6;background:rgba(10,12,19,.6);padding:2px 6px;border-radius:4px;white-space:nowrap;will-change:transform";
+    labelLayer.appendChild(el); l.el = el;
+  });
+
+  // ---------- Dive scene: falling through the atmosphere ----------
+  // Altitudes are measured from the 1-bar level. Deep values are model estimates.
+  const DIVE = [
+    { alt: 60, p: 0.1, t: -160, name: "Top of the sky", text: "Thin haze high above the clouds. The sky above is almost black, and the Sun looks 27 times dimmer than it does from Earth. Below you, the cloud tops stretch to the horizon.",
+      top: "#03050c", bottom: "#33405e", fog: "#1a2336", fogD: 0.0009, light: 1 },
+    { alt: 10, p: 0.6, t: -145, name: "Ammonia ice clouds", text: "These white and cream clouds of frozen ammonia are the cloud tops you see from space. Jet streams here blow at more than 500 km/h.",
+      top: "#1b2440", bottom: "#c9b796", fog: "#8f96a3", fogD: 0.0022, light: 1 },
+    { alt: 0, p: 1, t: -110, name: "The 1-bar level", text: "The air pressure here equals sea level on Earth, so scientists use it as Jupiter's “zero altitude.” There is still no ground, only thicker and thicker gas.",
+      top: "#3b4058", bottom: "#a88660", fog: "#857868", fogD: 0.0028, light: 0.85 },
+    { alt: -40, p: 2, t: -70, name: "Ammonium hydrosulfide clouds", text: "A deck of tan and rusty-brown clouds. Chemicals mixed into this layer help give Jupiter's belts their orange and brown colors.",
+      top: "#5e4838", bottom: "#6e3e22", fog: "#7d5234", fogD: 0.0042, light: 0.6 },
+    { alt: -90, p: 5, t: 0, name: "Water clouds and lightning", text: "Clouds of water droplets, about as warm as a winter day on Earth. Huge thunderstorms here make lightning flashes that spacecraft can see from orbit.",
+      top: "#2e2830", bottom: "#17151c", fog: "#28252e", fogD: 0.0055, light: 0.33 },
+    { alt: -150, p: 22, t: 153, name: "Galileo probe’s last signal", text: "In 1995 NASA's Galileo probe parachuted into Jupiter. It sent data for 58 minutes and went silent here, at 22 times Earth's air pressure and 153 °C.",
+      top: "#2a1a12", bottom: "#130a07", fog: "#24140e", fogD: 0.0075, light: 0.18 },
+    { alt: -600, p: 1000, t: 1000, name: "Deep hydrogen", text: "Pitch dark and glowing hot. The hydrogen is squeezed so hard that it is no longer a normal gas or liquid. No spacecraft could survive here.",
+      top: "#4a1608", bottom: "#250803", fog: "#47170a", fogD: 0.009, light: 0.15 },
+    { alt: -10000, p: 2e6, t: 6000, name: "Ocean of metallic hydrogen", text: "Pressure two million times Earth's turns hydrogen into a liquid metal that conducts electricity. Its swirling currents create Jupiter's giant magnetic field.",
+      top: "#a8481a", bottom: "#6a2208", fog: "#94401a", fogD: 0.01, light: 0.4 },
+    { alt: -69900, p: 4e7, t: 24000, name: "The center: a “fuzzy” core", text: "Juno found that the core of rock, ice and metal is not a neat solid ball but is partly dissolved into the hydrogen around it. It may be about 24,000 °C, hotter than the surface of the Sun.",
+      top: "#ffe0a8", bottom: "#ff9a4a", fog: "#ffc27a", fogD: 0.011, light: 1 }
+  ];
+  DIVE.forEach(s => { ["top", "bottom", "fog"].forEach(k => s[k] = new THREE.Color(s[k])); });
+  const STEP = 110, LAST = DIVE.length - 1;
+  const diveScene = new THREE.Scene();
+  const diveCam = new THREE.PerspectiveCamera(70, 1, 0.5, 3000);
+  diveCam.rotation.order = "YXZ";
+  diveScene.fog = new THREE.FogExp2(0x000000, 0.002);
+  const skyMat = new THREE.ShaderMaterial({
+    uniforms: { top: { value: new THREE.Color() }, bottom: { value: new THREE.Color() } },
+    vertexShader: "varying float h; void main(){ h = normalize(position).y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
+    fragmentShader: "uniform vec3 top; uniform vec3 bottom; varying float h; void main(){ gl_FragColor = vec4(mix(bottom, top, smoothstep(-0.35, 0.6, h)), 1.0); }",
+    side: THREE.BackSide, depthWrite: false, fog: false
+  });
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(1500, 32, 16), skyMat); diveScene.add(sky);
+  const diveSun = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, depthWrite: false, fog: false, transparent: true }));
+  diveSun.scale.set(160, 160, 1); diveScene.add(diveSun);
+
+  // soft cloud puff
+  const [puffC, pctx] = canvas2d(256, 256); const prnd = seeded(77);
+  for (let i = 0; i < 26; i++) {
+    const x = 70 + prnd() * 116, y = 80 + prnd() * 96, r = 30 + prnd() * 50;
+    const g = pctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, "rgba(255,255,255,.42)"); g.addColorStop(0.55, "rgba(255,255,255,.26)"); g.addColorStop(1, "rgba(255,255,255,0)");
+    pctx.fillStyle = g; pctx.beginPath(); pctx.arc(x, y, r, 0, Math.PI * 2); pctx.fill();
+  }
+  const puffTex = new THREE.CanvasTexture(puffC);
+  // cloud decks: [stop index, colors, wind speed]
+  const DECKS = [[1, [0xf4ecdc, 0xe6d6ba, 0xffffff], 26], [3, [0xb87443, 0xa05a30, 0xc99060], 14], [4, [0x9a96a2, 0x7c7886, 0xb8b4c0], 9]];
+  const decks = DECKS.map(([idx, colors, wind]) => {
+    const group = new THREE.Group(); const rnd = seeded(idx * 13 + 5);
+    const y0 = -idx * STEP - 24;
+    const mats = colors.map(c => new THREE.SpriteMaterial({ map: puffTex, color: c, transparent: true, depthWrite: false, opacity: 0.95 }));
+    for (let i = 0; i < 520; i++) {
+      const s = new THREE.Sprite(mats[i % mats.length]);
+      const below = rnd() < 0.85;
+      s.position.set((rnd() - 0.5) * 1400, below ? y0 - rnd() * 60 : y0 + 30 + rnd() * 40, (rnd() - 0.5) * 1400);
+      const sc = (below ? 70 : 30) + rnd() * 90; s.scale.set(sc * 1.8, sc, 1);
+      group.add(s);
+    }
+    diveScene.add(group);
+    return { idx, group, mats, base: colors.map(c => new THREE.Color(c)), wind };
+  });
+  // glowing particles rising in the deep interior
+  const emberGeo = new THREE.BufferGeometry(), ep = [], ernd = seeded(9);
+  for (let i = 0; i < 2500; i++) ep.push((ernd() - 0.5) * 500, (ernd() - 0.5) * 300, (ernd() - 0.5) * 500);
+  emberGeo.setAttribute("position", new THREE.Float32BufferAttribute(ep, 3));
+  const emberMat = new THREE.PointsMaterial({ map: glowTex, size: 5, color: 0xffa060, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 });
+  const embers = new THREE.Points(emberGeo, emberMat); diveScene.add(embers);
+  const lightningLight = { v: 0 };
+
+  // dive HUD
+  const diveHud = document.getElementById("diveHud");
+  const dv = id => document.getElementById(id);
+  const ruler = dv("diveRuler");
+  DIVE.forEach((s, i) => {
+    const b = document.createElement("button"); b.type = "button";
+    b.innerHTML = `<span>${s.name}</span><span class="num">${fmtAlt(s.alt)}</span>`;
+    b.addEventListener("click", () => { diveTarget = i; });
+    ruler.appendChild(b);
+  });
+  function fmtAlt(a) { return a > 0 ? `+${a} km` : a === 0 ? "0 km" : `${Math.abs(a).toLocaleString("en-US")} km down`; }
+  function fmtP(p) { return p >= 1e6 ? `${(p / 1e6).toLocaleString("en-US", { maximumFractionDigits: 0 })} million bar` : p >= 100 ? `${Math.round(p).toLocaleString("en-US")} bar` : `${p < 10 ? p.toFixed(1) : Math.round(p)} bar`; }
+  function fmtT(t) { return `${Math.round(t).toLocaleString("en-US").replace("-", "−")} °C`; }
+  const diveSlider = dv("diveDepth");
+  diveSlider.max = LAST;
+  let diveS = 0, diveTarget = 0, yaw = 0.6, pitch = -0.12, lastStop = -1;
+  diveSlider.addEventListener("input", () => { diveTarget = parseFloat(diveSlider.value); });
+  dv("diveDown").addEventListener("click", () => { diveTarget = Math.min(LAST, Math.floor(diveTarget + 1e-3) + 1); });
+  dv("diveUp").addEventListener("click", () => { diveTarget = Math.max(0, Math.ceil(diveTarget - 1e-3) - 1); });
+  dv("diveExit").addEventListener("click", () => exitDive());
+
+  // ---------- Interaction ----------
+  let simHours = 0, speed = 4, playing = true, mode = "orbit";
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion) { speed = 0.5; }
+  const speedEl = document.getElementById("speed"), speedOut = document.getElementById("speedOut");
+  speedEl.value = speed; speedOut.textContent = speed + " h/s";
+  speedEl.addEventListener("input", () => { speed = parseFloat(speedEl.value); speedOut.textContent = speed + " h/s"; });
+  const playBtn = document.getElementById("playBtn");
+  playBtn.addEventListener("click", () => { playing = !playing; playBtn.textContent = playing ? "Pause" : "Play"; playBtn.setAttribute("aria-pressed", String(!playing)); });
+  document.getElementById("orbits").addEventListener("change", e => orbitLines.forEach(l => l.visible = e.target.checked));
+  let showLabels = true;
+  document.getElementById("labels").addEventListener("change", e => { showLabels = e.target.checked; labelLayer.hidden = !showLabels; });
+
+  let focusKey = "jupiter", flying = 0, trackingStorm = false, spinOffset = 0;
+  controls.addEventListener("start", () => { trackingStorm = false; flying = 0; });
+  const GRS_THETA = Math.atan2(grsPoint.z, grsPoint.x);
+  const STORM_VIEW_ANGLE = THREE.MathUtils.degToRad(115); // between the Sun and the default camera
+  const FOCUS_DIST = { jupiter: 46, grs: 20, rings: 70 };
+  function focusObject(key) {
+    if (key === "grs") return grsAnchor;
+    if (key === "jupiter" || key === "rings") return jupiter;
+    return MOONS.find(m => m.key === key).mesh;
+  }
+  const chips = document.querySelectorAll("#targets .chip[data-target]");
+  function select(key) {
+    focusKey = key; flying = 1; trackingStorm = key === "grs";
+    chips.forEach(c => c.setAttribute("aria-pressed", String(c.dataset.target === key)));
+    showInfo(key);
+  }
+  chips.forEach(c => c.addEventListener("click", () => select(c.dataset.target)));
+
+  // dive transitions
+  const fade = document.getElementById("fade");
+  let diving = 0; // >0 while the camera falls toward the clouds
+  const diveFrom = new THREE.Vector3(), diveTo = new THREE.Vector3();
+  document.getElementById("diveBtn").addEventListener("click", () => {
+    if (mode !== "orbit" || diving) return;
+    select("jupiter"); flying = 0; trackingStorm = false;
+    diveFrom.copy(camera.position);
+    const dir = new THREE.Vector3(Math.cos(STORM_VIEW_ANGLE), 0.12, Math.sin(STORM_VIEW_ANGLE)).normalize();
+    diveTo.copy(dir).multiplyScalar(RJ * 1.01);
+    diving = 0.0001;
+  });
+  function enterDive() {
+    mode = "dive"; diveS = 0; diveTarget = 0; lastStop = -1;
+    viewer.classList.add("diving"); diveHud.hidden = false; labelLayer.hidden = true;
+    resize();
+    fade.classList.remove("on");
+  }
+  function exitDive() {
+    fade.classList.add("on");
+    setTimeout(() => {
+      mode = "orbit"; viewer.classList.remove("diving"); diveHud.hidden = true; labelLayer.hidden = !showLabels;
+      camera.position.set(0, 9, 46); controls.target.set(0, 0, 0); select("jupiter");
+      fade.classList.remove("on");
+    }, 450);
+  }
+
+  const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+  let downAt = null, dragLast = null;
+  canvas.addEventListener("pointerdown", e => { downAt = [e.clientX, e.clientY]; dragLast = [e.clientX, e.clientY]; });
+  canvas.addEventListener("pointermove", e => {
+    if (mode !== "dive" || !dragLast || !(e.buttons & 1) && e.pointerType === "mouse") return;
+    yaw -= (e.clientX - dragLast[0]) * 0.004; pitch -= (e.clientY - dragLast[1]) * 0.004;
+    pitch = Math.max(-1.3, Math.min(1.3, pitch)); dragLast = [e.clientX, e.clientY];
+  });
+  canvas.addEventListener("pointerup", e => {
+    dragLast = null;
+    if (mode !== "orbit" || !downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+    const rect = canvas.getBoundingClientRect();
+    mouse.set((e.clientX - rect.left) / rect.width * 2 - 1, -(e.clientY - rect.top) / rect.height * 2 + 1);
+    ray.setFromCamera(mouse, camera);
+    const hits = ray.intersectObjects([grsHit, jupiter, rings].concat(MOONS.map(m => m.mesh)), false);
+    if (hits.length) select(hits[0].object.userData.key);
+  });
+  canvas.addEventListener("wheel", e => {
+    if (mode !== "dive") return;
+    e.preventDefault();
+    diveTarget = Math.max(0, Math.min(LAST, diveTarget + e.deltaY * 0.0025));
+  }, { passive: false });
+  // orbit controls must ignore input while diving
+  const syncControls = () => { controls.enabled = mode === "orbit"; };
+
+  function resize() {
+    const w = viewer.clientWidth, h = viewer.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+    diveCam.aspect = w / h; diveCam.updateProjectionMatrix();
+  }
+  window.addEventListener("resize", resize); resize();
+
+  const clock = new THREE.Clock();
+  const wp = new THREE.Vector3(), prevTarget = new THREE.Vector3(), desired = new THREE.Vector3(), proj = new THREE.Vector3();
+  const cA = new THREE.Color(), cB = new THREE.Color();
+
+  function updateDive(dt) {
+    diveS += (diveTarget - diveS) * Math.min(1, dt * 1.6);
+    if (Math.abs(diveTarget - diveS) < 0.0005) diveS = diveTarget;
+    const i = Math.min(LAST - 1, Math.floor(diveS)), f = diveS - i, a = DIVE[i], b = DIVE[i + 1];
+    const k = f * f * (3 - 2 * f);
+    diveCam.position.set(0, -diveS * STEP, 0);
+    diveCam.rotation.set(pitch, yaw, 0);
+    yaw += dt * 0.02; // slow drift on the winds
+    skyMat.uniforms.top.value.copy(a.top).lerp(b.top, k);
+    skyMat.uniforms.bottom.value.copy(a.bottom).lerp(b.bottom, k);
+    diveScene.fog.color.copy(a.fog).lerp(b.fog, k);
+    diveScene.fog.density = a.fogD + (b.fogD - a.fogD) * k;
+    sky.position.copy(diveCam.position);
+    const light = a.light + (b.light - a.light) * k;
+    // lightning in the water-cloud layer
+    if (diveS > 3.4 && diveS < 5.2 && Math.random() < dt * 0.9) lightningLight.v = 1;
+    lightningLight.v = Math.max(0, lightningLight.v - dt * 3.5);
+    const flash = lightningLight.v * (0.6 + 0.4 * Math.sin(lightningLight.v * 40));
+    if (flash > 0) { skyMat.uniforms.bottom.value.lerp(cA.set(0xdfe6ff), flash * 0.6); diveScene.fog.color.lerp(cA.set(0xb8c0e0), flash * 0.5); }
+    decks.forEach(dk => {
+      dk.mats.forEach((m, j) => m.color.copy(dk.base[j]).multiplyScalar(Math.min(1.2, light + flash * 0.8)));
+      dk.group.children.forEach(s => { s.position.x += dk.wind * dt; if (s.position.x > 700) s.position.x -= 1400; });
+      dk.group.visible = Math.abs(diveS - dk.idx) < 2.2;
+    });
+    // the Sun fades out as the clouds close overhead
+    diveSun.position.set(diveCam.position.x - 500, diveCam.position.y + 700, diveCam.position.z + 300);
+    diveSun.material.opacity = Math.max(0, 1 - diveS / 2.6);
+    // embers deep down
+    emberMat.opacity = Math.max(0, Math.min(1, (diveS - 4.6) / 1.2));
+    emberMat.color.copy(cA.set(0xff7a30)).lerp(cB.set(0xfff0c0), Math.max(0, (diveS - 6.5) / 1.5));
+    embers.position.set(0, diveCam.position.y, 0);
+    const ea = emberGeo.attributes.position;
+    for (let n = 0; n < ea.count; n++) { let y = ea.getY(n) + dt * 22; if (y > 150) y -= 300; ea.setY(n, y); }
+    ea.needsUpdate = true;
+    // readouts
+    const alt = a.alt + (b.alt - a.alt) * f;
+    const p = Math.exp(Math.log(a.p) + (Math.log(b.p) - Math.log(a.p)) * f);
+    const t = a.t + (b.t - a.t) * f;
+    dv("dAlt").textContent = fmtAlt(Math.round(alt));
+    dv("dP").textContent = fmtP(p);
+    dv("dT").textContent = fmtT(t);
+    const stop = Math.round(diveS);
+    if (stop !== lastStop) {
+      lastStop = stop;
+      dv("dName").textContent = DIVE[stop].name;
+      dv("dText").textContent = DIVE[stop].text;
+      dv("dEst").hidden = stop < 6;
+      ruler.querySelectorAll("button").forEach((btn, j) => btn.setAttribute("aria-current", j === stop ? "true" : "false"));
+    }
+    if (document.activeElement !== diveSlider) diveSlider.value = diveS;
+    dv("diveUp").disabled = diveTarget <= 0;
+    dv("diveDown").disabled = diveTarget >= LAST;
+  }
+
+  function tick() {
+    const dt = Math.min(clock.getDelta(), 0.1);
+    syncControls();
+    if (playing) simHours += dt * speed;
+    MOONS.forEach(m => {
+      const a = m.phase + simHours / m.period * Math.PI * 2;
+      m.mesh.position.set(Math.cos(a) * m.orbit, 0, -Math.sin(a) * m.orbit);
+      m.mesh.rotation.y = -a; // tidally locked
+    });
+
+    if (mode === "dive") {
+      updateDive(dt);
+      renderer.render(diveScene, diveCam);
+      requestAnimationFrame(tick);
+      return;
+    }
+
+    const baseSpin = simHours / 9.925 * Math.PI * 2;
+    if (focusKey === "grs" && trackingStorm) {
+      // turn the storm to face the sunlit camera spot
+      let want = GRS_THETA - STORM_VIEW_ANGLE, cur = jupiter.rotation.y;
+      want = cur + Math.atan2(Math.sin(want - cur), Math.cos(want - cur));
+      jupiter.rotation.y = cur + (want - cur) * Math.min(1, dt * 2.5);
+      spinOffset = jupiter.rotation.y - baseSpin;
+    } else {
+      jupiter.rotation.y = baseSpin + spinOffset;
+    }
+
+    if (diving > 0) {
+      // fall toward the cloud tops, then fade into the dive view
+      diving = Math.min(1, diving + dt / 2.4);
+      const e = diving * diving * (3 - 2 * diving);
+      camera.position.lerpVectors(diveFrom, diveTo, e);
+      controls.target.set(0, 0, 0).lerp(desired.copy(diveTo).multiplyScalar(0.9), e);
+      camera.lookAt(controls.target);
+      if (diving > 0.8) fade.classList.add("on");
+      if (diving >= 1) { diving = 0; setTimeout(enterDive, 350); }
+      renderer.render(scene, camera);
+      requestAnimationFrame(tick);
+      return;
+    }
+
+    // camera follow
+    const obj = focusObject(focusKey);
+    obj.getWorldPosition(wp);
+    if (focusKey === "jupiter" || focusKey === "rings") wp.set(0, 0, 0);
+    if (focusKey === "grs" && trackingStorm) {
+      controls.target.lerp(wp, 0.08);
+      desired.set(Math.cos(STORM_VIEW_ANGLE), -0.25, Math.sin(STORM_VIEW_ANGLE)).normalize().multiplyScalar(16).add(wp);
+      camera.position.lerp(desired, 0.06);
+    } else if (flying > 0) {
+      if (focusKey === "grs") wp.set(0, 0, 0);
+      controls.target.lerp(wp, 0.08);
+      const fit = Math.max(1, 0.95 / camera.aspect); // portrait phones need more room
+      const dist = (FOCUS_DIST[focusKey] || MOONS.find(m => m.key === focusKey).radius * 4.5) * fit;
+      if (focusKey === "rings") desired.set(0, 26, dist);
+      else desired.copy(camera.position).sub(controls.target).normalize().multiplyScalar(dist).add(controls.target);
+      camera.position.lerp(desired, 0.06);
+      flying -= dt / 2.2;
+    } else {
+      if (focusKey === "grs") wp.set(0, 0, 0);
+      prevTarget.copy(controls.target);
+      controls.target.copy(wp);
+      camera.position.add(new THREE.Vector3().subVectors(controls.target, prevTarget));
+    }
+    const fm = MOONS.find(m => m.key === focusKey);
+    controls.minDistance = fm ? fm.radius * 1.6 : RJ * 1.12;
+    controls.update();
+    renderer.render(scene, camera);
+
+    // labels
+    if (showLabels) {
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      const camDir = new THREE.Vector3(); camera.getWorldDirection(camDir);
+      labelTargets.forEach(l => {
+        l.obj.getWorldPosition(proj);
+        // hide labels that are behind Jupiter or behind the camera
+        const toObj = proj.clone().sub(camera.position);
+        let hidden = toObj.dot(camDir) < 0;
+        if (!hidden && l.key !== "jupiter") {
+          ray.set(camera.position, toObj.clone().normalize());
+          const hit = ray.intersectObject(jupiter, false)[0];
+          if (hit && hit.distance < toObj.length() - 0.6) hidden = true;
+        }
+        if (l.key === "grs" && focusKey !== "grs" && camera.position.length() > 60) hidden = true;
+        proj.y += l.off; proj.project(camera);
+        if (hidden) { l.el.style.opacity = 0; return; }
+        l.el.style.opacity = 1;
+        l.el.style.transform = `translate(${(proj.x * 0.5 + 0.5) * w}px, ${(-proj.y * 0.5 + 0.5) * h}px) translate(-50%, -140%)`;
+      });
+    }
+    requestAnimationFrame(tick);
+  }
+  loading.hidden = true;
+  tick();
+  }
+})();
+</script>
+
+</body>
+</html>
