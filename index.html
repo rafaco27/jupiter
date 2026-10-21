@@ -219,12 +219,16 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
         <button class="chip" id="modeReal" aria-pressed="true">Realistic</button>
         <button class="chip" id="modeStyle" aria-pressed="false">Stylized</button>
       </div>
+      <div role="group" aria-label="Scale" style="display:flex;gap:4px">
+        <button class="chip" id="scaleFit" aria-pressed="true">Fit to screen</button>
+        <button class="chip" id="scaleTrue" aria-pressed="false">Real scale</button>
+      </div>
       <button class="chip" id="playBtn" aria-pressed="false">Pause</button>
       <label for="speed">Speed <input type="range" id="speed" min="0" max="40" step="0.5" value="4"> <span class="num" id="speedOut">4 h/s</span></label>
       <label for="orbits"><input type="checkbox" id="orbits" checked> Orbits</label>
       <label for="labels"><input type="checkbox" id="labels" checked> Labels</label>
     </div>
-    <div class="hint">Moon sizes ×3 and orbit distances compressed so everything fits on screen</div>
+    <div class="hint" id="scaleHint">Moon sizes ×3 and orbit distances compressed so everything fits on screen</div>
   </div>
   <div class="dive-hud" id="diveHud" hidden>
     <div class="gauge">
@@ -432,7 +436,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
 <footer>
   <div class="wrap">
     <p>Sources: NASA Solar System Exploration "Jupiter Facts" and "Jupiter Moons" pages, NASA Planetary Fact Sheet (NSSDCA), NASA Juno mission pages. Moon count reflects the IAU-recognized total; newly spotted small moons can raise it.</p>
-    <p>The 3D model uses hand-made textures inspired by real Jupiter images. Moons are enlarged 3× and orbit distances compressed so they fit on screen. Rotation speeds and orbital periods are to scale relative to each other.</p>
+    <p>The 3D model uses hand-made textures inspired by real Jupiter images. By default moons are enlarged 3× and orbit distances compressed so they fit on screen; press <b>Real scale</b> to see true moon sizes and distances. Rotation speeds and orbital periods are to scale relative to each other.</p>
   </div>
 </footer>
 
@@ -900,25 +904,54 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
   rings.rotation.x = -Math.PI / 2; rings.userData.key = "rings";
   system.add(rings);
 
-  // Galilean moons. Periods in hours; display orbit radii compressed, sizes ×3.
+  // Galilean moons. Periods in hours. "Fit" view compresses orbits and enlarges moons ×3;
+  // "Real scale" uses true distances (km from Jupiter's centre) and true sizes.
   const MOONS = [
-    { key: "io", period: 42.46, orbit: 25, size: 3643 },
-    { key: "europa", period: 85.23, orbit: 34, size: 3122 },
-    { key: "ganymede", period: 171.71, orbit: 46, size: 5268 },
-    { key: "callisto", period: 400.54, orbit: 62, size: 4821 }
+    { key: "io", period: 42.46, orbitFit: 25, km: 421700, size: 3643 },
+    { key: "europa", period: 85.23, orbitFit: 34, km: 671000, size: 3122 },
+    { key: "ganymede", period: 171.71, orbitFit: 46, km: 1070400, size: 5268 },
+    { key: "callisto", period: 400.54, orbitFit: 62, km: 1882700, size: 4821 }
   ];
   const kmPerUnit = 71492 / RJ;
+  MOONS.forEach(m => { m.orbitTrue = m.km / kmPerUnit; m.orbit = m.orbitFit; });
   const orbitLines = [];
   MOONS.forEach((m, i) => {
     const r = (m.size / 2) / kmPerUnit * 3;
     const tex = moonTexture(m.key);
     m.mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 96, 64), addDetail(new THREE.MeshStandardMaterial({ map: tex, bumpMap: tex, bumpScale: 0.01, roughness: 0.95 }), m.key === "europa" ? 0.18 : 0.34, 9, [1, 1, 1]));
-    m.mesh.userData.key = m.key; m.phase = i * 1.7 + 0.4; m.radius = r;
+    m.mesh.userData.key = m.key; m.phase = i * 1.7 + 0.4; m.radius = m.r0 = r;
     system.add(m.mesh);
-    const pts = []; for (let a = 0; a <= 192; a++) { const t = a / 192 * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(t) * m.orbit, 0, Math.sin(t) * m.orbit)); }
+    const pts = []; for (let a = 0; a <= 384; a++) { const t = a / 384 * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(t) * m.orbit, 0, Math.sin(t) * m.orbit)); }
     const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x8a7a64, transparent: true, opacity: 0.35 }));
-    system.add(line); orbitLines.push(line);
+    system.add(line); orbitLines.push(line); m.line = line;
   });
+
+  // ---------- Fit / Real scale ----------
+  let scaleT = 0, scaleGoal = 0; // 0 = fit to screen, 1 = real scale
+  const SCALE_HINTS = ["Moon sizes ×3 and orbit distances compressed so everything fits on screen",
+    "Real scale: true moon sizes and distances. Tap a moon's name to fly to it"];
+  function setScale(real) {
+    scaleGoal = real ? 1 : 0;
+    document.getElementById("scaleFit").setAttribute("aria-pressed", String(!real));
+    document.getElementById("scaleTrue").setAttribute("aria-pressed", String(real));
+    document.getElementById("scaleHint").textContent = SCALE_HINTS[scaleGoal];
+    controls.maxDistance = real ? 1100 : 260;
+    if (mode === "orbit" && !diving) select(focusKey === "grs" ? "jupiter" : focusKey);
+  }
+  function applyScale(dt) {
+    if (scaleT === scaleGoal) return;
+    scaleT += Math.sign(scaleGoal - scaleT) * dt / 1.6;
+    scaleT = Math.max(0, Math.min(1, scaleT));
+    const e = scaleT * scaleT * (3 - 2 * scaleT);
+    MOONS.forEach(m => {
+      m.orbit = m.orbitFit + (m.orbitTrue - m.orbitFit) * e;
+      const s = 1 - e * 2 / 3; // ×3 down to ×1
+      m.mesh.scale.setScalar(s); m.radius = m.r0 * s;
+      m.line.scale.setScalar(m.orbit / m.orbitFit);
+    });
+  }
+  document.getElementById("scaleFit").addEventListener("click", () => setScale(false));
+  document.getElementById("scaleTrue").addEventListener("click", () => setScale(true));
 
   // ---------- Realistic / Stylized looks ----------
   const grad = toonGradient();
@@ -957,11 +990,12 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
   const labelLayer = document.createElement("div");
   labelLayer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden";
   viewer.insertBefore(labelLayer, viewer.querySelector(".hud.top"));
-  const labelTargets = [{ key: "jupiter", obj: jupiter, off: RJ * 1.05 }, { key: "grs", obj: grsAnchor, off: 1.6 }].concat(MOONS.map(m => ({ key: m.key, obj: m.mesh, off: m.radius * 1.3 })));
+  const labelTargets = [{ key: "jupiter", obj: jupiter, off: RJ * 1.05 }, { key: "grs", obj: grsAnchor, off: 1.6 }].concat(MOONS.map(m => ({ key: m.key, obj: m.mesh, moon: m })));
   labelTargets.forEach(l => {
     const el = document.createElement("div");
     el.textContent = INFO[l.key].name;
-    el.style.cssText = "position:absolute;left:0;top:0;font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#efe6d6;background:rgba(10,12,19,.6);padding:2px 6px;border-radius:4px;white-space:nowrap;will-change:transform";
+    el.style.cssText = "position:absolute;left:0;top:0;font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#efe6d6;background:rgba(10,12,19,.6);padding:2px 6px;border-radius:4px;white-space:nowrap;will-change:transform;pointer-events:auto;cursor:pointer";
+    el.addEventListener("click", () => { if (mode === "orbit") select(l.key); });
     labelLayer.appendChild(el); l.el = el;
   });
 
@@ -1110,7 +1144,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
     fade.classList.add("on");
     setTimeout(() => {
       mode = "orbit"; viewer.classList.remove("diving"); diveHud.hidden = true; labelLayer.hidden = !showLabels;
-      camera.position.set(0, 9, 46); controls.target.set(0, 0, 0); select("jupiter");
+      camera.position.set(0, 9, 46).multiplyScalar(scaleGoal ? 12 : 1); controls.target.set(0, 0, 0); select("jupiter");
       fade.classList.remove("on");
     }, 450);
   }
@@ -1210,6 +1244,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
     const dt = Math.min(clock.getDelta(), 0.1);
     syncControls();
     if (playing) simHours += dt * speed;
+    applyScale(dt);
     MOONS.forEach(m => {
       const a = m.phase + simHours / m.period * Math.PI * 2;
       m.mesh.position.set(Math.cos(a) * m.orbit, 0, -Math.sin(a) * m.orbit);
@@ -1258,12 +1293,15 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
       camera.position.lerp(desired, 0.06);
     } else if (flying > 0) {
       if (focusKey === "grs") wp.set(0, 0, 0);
-      controls.target.lerp(wp, 0.08);
+      const ease = 1 - Math.exp(-dt * 4.5); // frame-rate independent, so long real-scale flights still arrive
+      controls.target.lerp(wp, ease);
       const fit = Math.max(1, 0.95 / camera.aspect); // portrait phones need more room
-      const dist = (FOCUS_DIST[focusKey] || MOONS.find(m => m.key === focusKey).radius * 4.5) * fit;
+      const overview = scaleGoal === 1 && focusKey === "jupiter" ? 760 : 0;
+      const dist = (overview || FOCUS_DIST[focusKey] || MOONS.find(m => m.key === focusKey).r0 * (1 - scaleGoal * 2 / 3) * 4.5) * fit;
       if (focusKey === "rings") desired.set(0, 26, dist);
+      else if (overview) desired.set(0, 0.5, 1).normalize().multiplyScalar(dist); // look down on the whole system
       else desired.copy(camera.position).sub(controls.target).normalize().multiplyScalar(dist).add(controls.target);
-      camera.position.lerp(desired, 0.06);
+      camera.position.lerp(desired, ease);
       flying -= dt / 2.2;
     } else {
       if (focusKey === "grs") wp.set(0, 0, 0);
@@ -1291,7 +1329,8 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
           if (hit && hit.distance < toObj.length() - 0.6) hidden = true;
         }
         if (l.key === "grs" && focusKey !== "grs" && camera.position.length() > 60) hidden = true;
-        proj.y += l.off; proj.project(camera);
+        proj.y += l.moon ? l.moon.radius * 1.3 : l.off; proj.project(camera);
+        l.el.style.pointerEvents = hidden ? "none" : "auto";
         if (hidden) { l.el.style.opacity = 0; return; }
         l.el.style.opacity = 1;
         l.el.style.transform = `translate(${(proj.x * 0.5 + 0.5) * w}px, ${(-proj.y * 0.5 + 0.5) * h}px) translate(-50%, -140%)`;
