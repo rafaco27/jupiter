@@ -192,7 +192,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
       <div class="eyebrow">Fifth planet from the Sun · Gas giant</div>
       <h1>Jupiter <span>Up Close</span></h1>
     </div>
-    <p>Drag to orbit, scroll or pinch to zoom, and click Jupiter, its rings, or any of the four Galilean moons to read about it. Press <b>Dive into Jupiter</b> to fall through the clouds all the way to the core.</p>
+    <p>Drag to orbit, scroll or pinch to zoom, and click Jupiter, its rings, the Sun, or any of the four Galilean moons to read about it. Press <b>Dive into Jupiter</b> to fall through the clouds all the way to the core.</p>
   </div>
 </header>
 
@@ -207,6 +207,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
     <button class="chip" data-target="europa" aria-pressed="false">Europa</button>
     <button class="chip" data-target="ganymede" aria-pressed="false">Ganymede</button>
     <button class="chip" data-target="callisto" aria-pressed="false">Callisto</button>
+    <button class="chip" data-target="sun" aria-pressed="false">Sun</button>
     <button class="chip dive" id="diveBtn">Dive into Jupiter ↓</button>
   </div>
   <aside class="card" id="card" aria-live="polite">
@@ -465,6 +466,9 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
     ganymede: { name: "Ganymede", tag: "Biggest moon in the solar system",
       rows: [["Diameter", "5,268 km"], ["Distance from Jupiter", "1,070,000 km"], ["Orbit", "7.15 days"], ["Bigger than", "Mercury"]],
       text: "Old dark regions sit next to lighter, grooved terrain. It is the only moon known to make its own magnetic field, and it probably has an underground ocean too. ESA's JUICE will orbit it in the 2030s." },
+    sun: { name: "The Sun", tag: "Our star, seen from Jupiter",
+      rows: [["Distance from Jupiter", "778 million km (5.2 AU)"], ["Sunlight travel time", "~43 minutes"], ["Diameter", "1,392,700 km"], ["Compared to Jupiter", "about 10× wider"], ["Surface temp", "~5,500 °C"], ["Size in Jupiter's sky", "1/5 as wide as from Earth"], ["Brightness at Jupiter", "~27× dimmer than at Earth"]],
+      text: "The Sun is drawn extra large here so you can see it. Press “Real scale” to shrink it to its true size in Jupiter's sky: a small, dazzling disk about a fifth as wide as it looks from Earth. Even so, it is the brightest thing Jupiter sees, and its light lights up the side of the planet facing it." },
     callisto: { name: "Callisto", tag: "The cratered moon",
       rows: [["Diameter", "4,821 km"], ["Distance from Jupiter", "1,883,000 km"], ["Orbit", "16.69 days"], ["Surface age", "~4 billion yrs"]],
       text: "Covered in craters from edge to edge because almost nothing has changed it for billions of years. The rings around Valhalla, its biggest impact basin, stretch about 3,800 km across." }
@@ -867,8 +871,50 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
   grd.addColorStop(0, "rgba(255,245,220,1)"); grd.addColorStop(0.15, "rgba(255,220,150,.8)"); grd.addColorStop(1, "rgba(255,200,120,0)");
   gctx.fillStyle = grd; gctx.fillRect(0, 0, 128, 128);
   const glowTex = new THREE.CanvasTexture(glowC);
-  const sunSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, depthWrite: false }));
-  sunSprite.position.copy(SUN_DIR).multiplyScalar(1500); sunSprite.scale.set(70, 70, 1); scene.add(sunSprite);
+  // ---------- The Sun ----------
+  // Fit view draws it large; Real scale shrinks it to its true size in Jupiter's sky (0.1° across).
+  const SUN_DIST = 1400, SUN_R_FIT = 50, SUN_R_TRUE = SUN_DIST * (696000 / 778500000);
+  function sunTexture() {
+    const W = 512, H = 256; const [c, ctx] = canvas2d(W, H); const img = ctx.createImageData(W, H), d = img.data;
+    const n = makeNoise(53), n2 = makeNoise(59);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const u = x / W, v = y / H;
+      const cell = fbm(n, u * 48, v * 24, 3, 48), big = fbm(n2, u * 6, v * 3, 4, 6);
+      const k = Math.min(1, Math.max(0, cell * 1.3 - 0.15 + (big - 0.5) * 0.5));
+      const i = (y * W + x) * 4;
+      d[i] = 255; d[i + 1] = 150 + k * 95; d[i + 2] = 40 + k * 150; d[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    // a few dark sunspots
+    const rnd = seeded(61);
+    for (let i = 0; i < 7; i++) {
+      const sx = rnd() * W, sy = H * (0.35 + rnd() * 0.3), r = 3 + rnd() * 5;
+      const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, r * 2);
+      g.addColorStop(0, "rgba(90,30,10,.95)"); g.addColorStop(0.45, "rgba(170,70,20,.7)"); g.addColorStop(1, "rgba(255,150,40,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(sx, sy, r * 2, r * 1.4, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    const t = new THREE.CanvasTexture(c); t.anisotropy = MAX_ANISO; return t;
+  }
+  const sunMat = new THREE.ShaderMaterial({
+    uniforms: { map: { value: sunTexture() }, tint: { value: new THREE.Color(0xffffff) } },
+    vertexShader: "varying vec2 vUv; varying vec3 vN; varying vec3 vV; void main(){ vUv = uv; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }",
+    // limb darkening: the edge of the disk is dimmer and redder than the middle
+    fragmentShader: "uniform sampler2D map; uniform vec3 tint; varying vec2 vUv; varying vec3 vN; varying vec3 vV; void main(){ float mu = max(dot(vN, vV), 0.0); vec3 c = texture2D(map, vUv).rgb * tint; c *= vec3(0.55, 0.42, 0.3) + vec3(0.6, 0.66, 0.72) * pow(mu, 0.5); gl_FragColor = vec4(min(c * 1.15, 1.0), 1.0); }"
+  });
+  const sunBody = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 32), sunMat);
+  sunBody.position.copy(SUN_DIR).multiplyScalar(SUN_DIST); sunBody.scale.setScalar(SUN_R_FIT);
+  sunBody.userData.key = "sun"; scene.add(sunBody);
+  const glowMat = o => new THREE.SpriteMaterial({ map: glowTex, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending, opacity: o });
+  const corona = new THREE.Sprite(glowMat(0.9)), halo = new THREE.Sprite(glowMat(0.35));
+  corona.raycast = () => {}; halo.raycast = () => {};
+  corona.position.copy(sunBody.position); halo.position.copy(sunBody.position);
+  scene.add(corona, halo);
+  function sizeSun(r) {
+    sunBody.scale.setScalar(r);
+    corona.scale.setScalar(Math.max(r * 3.2, 60));
+    halo.scale.setScalar(Math.max(r * 9, 260));
+  }
+  sizeSun(SUN_R_FIT);
 
   // Jupiter system, tilted 3.13°
   const RJ = 10;
@@ -930,7 +976,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
   // ---------- Fit / Real scale ----------
   let scaleT = 0, scaleGoal = 0; // 0 = fit to screen, 1 = real scale
   const SCALE_HINTS = ["Moon sizes ×3 and orbit distances compressed so everything fits on screen",
-    "Real scale: true moon sizes and distances. Tap a moon's name to fly to it"];
+    "Real scale: true moon sizes and distances, and the Sun at its true size in Jupiter's sky. Tap a name to fly to it"];
   function updateHint() {
     const real = document.getElementById("realSpeed").getAttribute("aria-pressed") === "true";
     document.getElementById("scaleHint").textContent = SCALE_HINTS[scaleGoal] +
@@ -949,6 +995,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
     scaleT += Math.sign(scaleGoal - scaleT) * dt / 1.6;
     scaleT = Math.max(0, Math.min(1, scaleT));
     const e = scaleT * scaleT * (3 - 2 * scaleT);
+    sizeSun(SUN_R_FIT + (SUN_R_TRUE - SUN_R_FIT) * e);
     MOONS.forEach(m => {
       m.orbit = m.orbitFit + (m.orbitTrue - m.orbitFit) * e;
       const s = 1 - e * 2 / 3; // ×3 down to ×1
@@ -983,6 +1030,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
     rings.material.color.set(styl ? 0xffb066 : 0xffffff);
     orbitLines.forEach(l => { l.material.color.set(styl ? 0xffb066 : 0x8a7a64); l.material.opacity = styl ? 0.6 : 0.35; });
     scene.background.set(styl ? 0x1a1433 : 0x05060a);
+    sunMat.uniforms.tint.value.set(styl ? 0xffd27a : 0xffffff);
     ambient.intensity = styl ? 0.9 : 0.35;
     sun.intensity = styl ? 1.1 : 1.9;
     document.getElementById("modeReal").setAttribute("aria-pressed", String(!styl));
@@ -996,7 +1044,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
   const labelLayer = document.createElement("div");
   labelLayer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden";
   viewer.insertBefore(labelLayer, viewer.querySelector(".hud.top"));
-  const labelTargets = [{ key: "jupiter", obj: jupiter, off: RJ * 1.05 }, { key: "grs", obj: grsAnchor, off: 1.6 }].concat(MOONS.map(m => ({ key: m.key, obj: m.mesh, moon: m })));
+  const labelTargets = [{ key: "jupiter", obj: jupiter, off: RJ * 1.05 }, { key: "grs", obj: grsAnchor, off: 1.6 }, { key: "sun", obj: sunBody, sun: true }].concat(MOONS.map(m => ({ key: m.key, obj: m.mesh, moon: m })));
   labelTargets.forEach(l => {
     const el = document.createElement("div");
     el.textContent = INFO[l.key].name;
@@ -1128,10 +1176,11 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
   controls.addEventListener("start", () => { trackingStorm = false; flying = 0; });
   const GRS_THETA = Math.atan2(grsPoint.z, grsPoint.x);
   const STORM_VIEW_ANGLE = THREE.MathUtils.degToRad(115); // between the Sun and the default camera
-  const FOCUS_DIST = { jupiter: 46, grs: 20, rings: 70 };
+  const FOCUS_DIST = { jupiter: 46, grs: 20, rings: 70, sun: 95 };
+  const SUN_VIEW = SUN_DIR.clone().negate().add(new THREE.Vector3().crossVectors(SUN_DIR, new THREE.Vector3(0, 1, 0)).normalize().multiplyScalar(-0.42)).add(new THREE.Vector3(0, 0.12, 0)).normalize();
   function focusObject(key) {
     if (key === "grs") return grsAnchor;
-    if (key === "jupiter" || key === "rings") return jupiter;
+    if (key === "jupiter" || key === "rings" || key === "sun") return jupiter;
     return MOONS.find(m => m.key === key).mesh;
   }
   const chips = document.querySelectorAll("#targets .chip[data-target]");
@@ -1183,7 +1232,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
     const rect = canvas.getBoundingClientRect();
     mouse.set((e.clientX - rect.left) / rect.width * 2 - 1, -(e.clientY - rect.top) / rect.height * 2 + 1);
     ray.setFromCamera(mouse, camera);
-    const hits = ray.intersectObjects([grsHit, jupiter, rings].concat(MOONS.map(m => m.mesh)), false);
+    const hits = ray.intersectObjects([grsHit, jupiter, rings, sunBody].concat(MOONS.map(m => m.mesh)), false);
     if (hits.length) select(hits[0].object.userData.key);
   });
   canvas.addEventListener("wheel", e => {
@@ -1278,6 +1327,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
       return;
     }
 
+    sunBody.rotation.y = simHours / (25.4 * 24) * Math.PI * 2;
     const baseSpin = simHours / 9.925 * Math.PI * 2;
     if (focusKey === "grs" && trackingStorm) {
       // turn the storm to face the sunlit camera spot
@@ -1306,7 +1356,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
     // camera follow
     const obj = focusObject(focusKey);
     obj.getWorldPosition(wp);
-    if (focusKey === "jupiter" || focusKey === "rings") wp.set(0, 0, 0);
+    if (focusKey === "jupiter" || focusKey === "rings" || focusKey === "sun") wp.set(0, 0, 0);
     if (focusKey === "grs" && trackingStorm) {
       controls.target.lerp(wp, 0.08);
       desired.set(Math.cos(STORM_VIEW_ANGLE), -0.25, Math.sin(STORM_VIEW_ANGLE)).normalize().multiplyScalar(16).add(wp);
@@ -1319,6 +1369,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
       const overview = scaleGoal === 1 && focusKey === "jupiter" ? 760 : 0;
       const dist = (overview || FOCUS_DIST[focusKey] || MOONS.find(m => m.key === focusKey).r0 * (1 - scaleGoal * 2 / 3) * 4.5) * fit;
       if (focusKey === "rings") desired.set(0, 26, dist);
+      else if (focusKey === "sun") desired.copy(SUN_VIEW).multiplyScalar(95 * fit); // behind Jupiter, looking toward the Sun
       else if (overview) desired.set(0, 0.5, 1).normalize().multiplyScalar(dist); // look down on the whole system
       else desired.copy(camera.position).sub(controls.target).normalize().multiplyScalar(dist).add(controls.target);
       camera.position.lerp(desired, ease);
@@ -1349,7 +1400,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
           if (hit && hit.distance < toObj.length() - 0.6) hidden = true;
         }
         if (l.key === "grs" && focusKey !== "grs" && camera.position.length() > 60) hidden = true;
-        proj.y += l.moon ? l.moon.radius * 1.3 : l.off; proj.project(camera);
+        proj.y += l.moon ? l.moon.radius * 1.3 : l.sun ? Math.max(sunBody.scale.x * 1.25, 24) : l.off; proj.project(camera);
         l.el.style.pointerEvents = hidden ? "none" : "auto";
         if (hidden) { l.el.style.opacity = 0; return; }
         l.el.style.opacity = 1;
