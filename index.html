@@ -225,6 +225,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
       </div>
       <button class="chip" id="playBtn" aria-pressed="false">Pause</button>
       <label for="speed">Speed <input type="range" id="speed" min="0" max="40" step="0.5" value="4"> <span class="num" id="speedOut">4 h/s</span></label>
+      <button class="chip" id="realSpeed" aria-pressed="false" title="Run at true real-world speed: one Jupiter day takes 9 h 56 min">Real speed</button>
       <label for="orbits"><input type="checkbox" id="orbits" checked> Orbits</label>
       <label for="labels"><input type="checkbox" id="labels" checked> Labels</label>
     </div>
@@ -436,7 +437,7 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
 <footer>
   <div class="wrap">
     <p>Sources: NASA Solar System Exploration "Jupiter Facts" and "Jupiter Moons" pages, NASA Planetary Fact Sheet (NSSDCA), NASA Juno mission pages. Moon count reflects the IAU-recognized total; newly spotted small moons can raise it.</p>
-    <p>The 3D model uses hand-made textures inspired by real Jupiter images. By default moons are enlarged 3× and orbit distances compressed so they fit on screen; press <b>Real scale</b> to see true moon sizes and distances. Rotation speeds and orbital periods are to scale relative to each other.</p>
+    <p>The 3D model uses hand-made textures inspired by real Jupiter images. By default moons are enlarged 3× and orbit distances compressed so they fit on screen; press <b>Real scale</b> to see true moon sizes and distances. Rotation speeds and orbital periods are to scale relative to each other; press <b>Real speed</b> to run them at true real-world rates.</p>
   </div>
 </footer>
 
@@ -930,11 +931,16 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
   let scaleT = 0, scaleGoal = 0; // 0 = fit to screen, 1 = real scale
   const SCALE_HINTS = ["Moon sizes ×3 and orbit distances compressed so everything fits on screen",
     "Real scale: true moon sizes and distances. Tap a moon's name to fly to it"];
+  function updateHint() {
+    const real = document.getElementById("realSpeed").getAttribute("aria-pressed") === "true";
+    document.getElementById("scaleHint").textContent = SCALE_HINTS[scaleGoal] +
+      (real ? ". Real speed: one spin takes 9 h 56 min and Io needs 42.5 h per orbit, so motion is very slow" : "");
+  }
   function setScale(real) {
     scaleGoal = real ? 1 : 0;
     document.getElementById("scaleFit").setAttribute("aria-pressed", String(!real));
     document.getElementById("scaleTrue").setAttribute("aria-pressed", String(real));
-    document.getElementById("scaleHint").textContent = SCALE_HINTS[scaleGoal];
+    updateHint();
     controls.maxDistance = real ? 1100 : 260;
     if (mode === "orbit" && !diving) select(focusKey === "grs" ? "jupiter" : focusKey);
   }
@@ -1097,7 +1103,21 @@ footer p { margin: 0 0 6px; max-width: 90ch; }
   if (reduceMotion) { speed = 0.5; }
   const speedEl = document.getElementById("speed"), speedOut = document.getElementById("speedOut");
   speedEl.value = speed; speedOut.textContent = speed + " h/s";
-  speedEl.addEventListener("input", () => { speed = parseFloat(speedEl.value); speedOut.textContent = speed + " h/s"; });
+  const realSpeedBtn = document.getElementById("realSpeed");
+  let sliderSpeed = speed;
+  function setRealSpeed(on) {
+    realSpeedBtn.setAttribute("aria-pressed", String(on));
+    if (on) {
+      speed = 1 / 3600; // 1 simulated hour per real hour
+      speedOut.textContent = "1× real time";
+    } else {
+      speed = sliderSpeed;
+      speedOut.textContent = speed + " h/s";
+    }
+    updateHint();
+  }
+  speedEl.addEventListener("input", () => { sliderSpeed = parseFloat(speedEl.value); setRealSpeed(false); });
+  realSpeedBtn.addEventListener("click", () => setRealSpeed(realSpeedBtn.getAttribute("aria-pressed") !== "true"));
   const playBtn = document.getElementById("playBtn");
   playBtn.addEventListener("click", () => { playing = !playing; playBtn.textContent = playing ? "Pause" : "Play"; playBtn.setAttribute("aria-pressed", String(!playing)); });
   document.getElementById("orbits").addEventListener("change", e => orbitLines.forEach(l => l.visible = e.target.checked));
